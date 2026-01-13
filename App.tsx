@@ -5,11 +5,11 @@ import { HomePage } from './components/HomePage';
 import { ResultsPage } from './components/ResultsPage';
 import { PharmacyDetailModal } from './components/PharmacyDetailModal';
 import { AccessibilityControls } from './components/AccessibilityControls';
-import { getMedicineRecommendations, validateMedicineName, getMedicineDescription, getMedicineAlternative } from './services/geminiService';
-import { checkMedicineLocally, findNearbyPharmacies, getMedicineDetailsForPharmacy } from './services/pharmacyService';
+import { aiService, medicineService } from './services/api';
 import { StockStatus } from './types';
 import type { Pharmacy, SortKey, FontSize, SearchConfirmation } from './types';
 import { PharmacyOwnerPage } from './components/PharmacyOwnerPage';
+import { motion, AnimatePresence } from 'framer-motion';
 
 
 export default function App() {
@@ -30,7 +30,7 @@ export default function App() {
     document.body.classList.remove('font-size-base', 'font-size-lg', 'font-size-xl');
     document.body.classList.add(`font-size-${fontSize}`);
   }, [fontSize]);
-  
+
   const handleMedicineSelect = (medicine: string) => {
     setSearchConfirmation(null);
     setPharmacies([]);
@@ -53,32 +53,35 @@ export default function App() {
         const { latitude, longitude } = position.coords;
         setStatusText(`Finding pharmacies with ${medicine} near you...`);
         try {
-          const descriptionPromise = getMedicineDescription(medicine);
-          const pharmaciesPromise = findNearbyPharmacies({ lat: latitude, lon: longitude }, medicine);
-          
-          let [description, foundPharmacies] = await Promise.all([descriptionPromise, pharmaciesPromise]);
+          // Use search endpoint from backend
+          const response = await medicineService.search(medicine);
+          const foundMedicines = response.data;
 
-          setMedicineDescription(description);
-          
-          const availablePharmacies = foundPharmacies.filter(
-            p => p.stock === StockStatus.Available
-          );
+          setMedicineDescription(`${medicine} is commonly used for various health needs. Consult a doctor for professional advice.`);
+
+          const availablePharmacies = foundMedicines.map((m: any) => ({
+            ...m.pharmacyId,
+            medicine: m.name,
+            price: m.price,
+            stock: m.stock,
+            distance: Math.random() * 5 // Mock distance calculation
+          })).filter((p: any) => p.stock === StockStatus.Available);
 
           setPharmacies(availablePharmacies);
 
         } catch (error) {
-           console.error("Failed to find pharmacies or get description:", error);
-           setStatusText('Could not fetch pharmacy data.');
+          console.error("Failed to find pharmacies:", error);
+          setStatusText('Could not fetch medicine data from server.');
         } finally {
-            setIsLoading(false);
-            setStatusText('');
+          setIsLoading(false);
+          setStatusText('');
         }
       },
       (error) => {
         console.error("Geolocation error:", error);
         let errorMsg = 'Could not get your location. Please enable location services in your browser settings.';
         if (error.code === error.PERMISSION_DENIED) {
-            errorMsg = 'Location access denied. Please allow location access to find nearby pharmacies.';
+          errorMsg = 'Location access denied. Please allow location access to find nearby pharmacies.';
         }
         setLocationError(errorMsg);
         setStatusText(errorMsg);
@@ -100,36 +103,36 @@ export default function App() {
     setStatusText(`Searching for '${trimmedMedicine}'...`);
 
     try {
-        const isLocallyAvailable = await checkMedicineLocally(trimmedMedicine);
-        if (isLocallyAvailable) {
-            handleMedicineSelect(trimmedMedicine);
-            return;
-        }
-        
-        setStatusText(`Validating '${trimmedMedicine}'...`);
-        const validation = await validateMedicineName(trimmedMedicine);
+      const isLocallyAvailable = await checkMedicineLocally(trimmedMedicine);
+      if (isLocallyAvailable) {
+        handleMedicineSelect(trimmedMedicine);
+        return;
+      }
 
-        if (!validation.valid) {
-            setStatusText(validation.reason || `Sorry, '${trimmedMedicine}' doesn't seem to be a recognized medicine. Please check the spelling and try again.`);
-            setIsLoading(false);
-            return;
-        }
+      setStatusText(`Validating '${trimmedMedicine}'...`);
+      const validation = await validateMedicineName(trimmedMedicine);
 
-        const suggestedMedicine = validation.correctedName || trimmedMedicine;
-        
-        if (suggestedMedicine.toLowerCase() !== trimmedMedicine.toLowerCase()) {
-            setSearchConfirmation({ suggestion: suggestedMedicine, original: trimmedMedicine });
-            setIsLoading(false);
-            setStatusText(`We think you meant '${suggestedMedicine}'.`);
-        } else {
-            handleMedicineSelect(suggestedMedicine);
-        }
+      if (!validation.valid) {
+        setStatusText(validation.reason || `Sorry, '${trimmedMedicine}' doesn't seem to be a recognized medicine. Please check the spelling and try again.`);
+        setIsLoading(false);
+        return;
+      }
+
+      const suggestedMedicine = validation.correctedName || trimmedMedicine;
+
+      if (suggestedMedicine.toLowerCase() !== trimmedMedicine.toLowerCase()) {
+        setSearchConfirmation({ suggestion: suggestedMedicine, original: trimmedMedicine });
+        setIsLoading(false);
+        setStatusText(`We think you meant '${suggestedMedicine}'.`);
+      } else {
+        handleMedicineSelect(suggestedMedicine);
+      }
 
     } catch (error) {
-        console.error("Medicine validation failed:", error);
-        setStatusText(`Couldn't validate '${trimmedMedicine}'. You can search for it anyway.`);
-        setSearchConfirmation({ suggestion: null, original: trimmedMedicine });
-        setIsLoading(false);
+      console.error("Medicine validation failed:", error);
+      setStatusText(`Couldn't validate '${trimmedMedicine}'. You can search for it anyway.`);
+      setSearchConfirmation({ suggestion: null, original: trimmedMedicine });
+      setIsLoading(false);
     }
   };
 
@@ -147,7 +150,7 @@ export default function App() {
     try {
       const recommendations = await getMedicineRecommendations(disease);
       const choices = recommendations.split(',').map(m => m.trim()).filter(Boolean);
-      
+
       if (choices.length === 0) {
         setStatusText(`No specific medicine recommendations found for '${disease}'. Try searching for a medicine directly.`);
         setIsLoading(false);
@@ -203,33 +206,67 @@ export default function App() {
     setSearchedMedicine('');
     setMedicineDescription('');
   }
-  
+
   const handlePharmacyOwnerClick = () => {
     setPage('pharmacyOwner');
   };
 
   return (
-    <div className={`bg-[#121212] min-h-screen text-gray-200 selection:bg-teal-500/30 font-size-${fontSize}`}>
+    <div className={`bg-[#0f172a] min-h-screen text-slate-200 selection:bg-teal-500/30 font-size-${fontSize}`}>
       <Header onHomeClick={handleReturnHome} onPharmacyOwnerClick={handlePharmacyOwnerClick} />
-      <main className="px-4 py-8 sm:px-6 lg:px-8">
-        {page === 'home' && <HomePage onMedicineSearch={handleMedicineSearch} onDiseaseSearch={handleDiseaseSearch} />}
-        {page === 'results' && (
-          <ResultsPage
-            pharmacies={sortedPharmacies}
-            isLoading={isLoading}
-            statusText={statusText || locationError}
-            onSelectPharmacy={setSelectedPharmacy}
-            sortBy={sortBy}
-            onSortChange={setSortBy}
-            medicineChoices={medicineChoices}
-            onMedicineSelect={handleMedicineSelect}
-            searchConfirmation={searchConfirmation}
-            searchedMedicine={searchedMedicine}
-            medicineDescription={medicineDescription}
-          />
-        )}
-        {page === 'pharmacyOwner' && <PharmacyOwnerPage />}
+
+      <main className="px-4 py-8 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <AnimatePresence mode="wait">
+          {page === 'home' && (
+            <motion.div
+              key="home"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+            >
+              <HomePage onMedicineSearch={handleMedicineSearch} onDiseaseSearch={handleDiseaseSearch} />
+            </motion.div>
+          )}
+
+          {page === 'results' && (
+            <motion.div
+              key="results"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.4 }}
+            >
+              <ResultsPage
+                pharmacies={sortedPharmacies}
+                isLoading={isLoading}
+                statusText={statusText || locationError}
+                onSelectPharmacy={setSelectedPharmacy}
+                sortBy={sortBy}
+                onSortChange={setSortBy}
+                medicineChoices={medicineChoices}
+                onMedicineSelect={handleMedicineSelect}
+                searchConfirmation={searchConfirmation}
+                searchedMedicine={searchedMedicine}
+                medicineDescription={medicineDescription}
+              />
+            </motion.div>
+          )}
+
+          {page === 'pharmacyOwner' && (
+            <motion.div
+              key="owner"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.4 }}
+            >
+              <PharmacyOwnerPage />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
+
       <PharmacyDetailModal
         pharmacy={selectedPharmacy}
         onClose={() => setSelectedPharmacy(null)}

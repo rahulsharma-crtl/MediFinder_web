@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { SearchIcon, CameraIcon, MicIcon, PillIcon } from './icons';
-import { parsePrescription } from '../services/geminiService';
+import React, { useState, useRef } from 'react';
+import { SearchIcon, CameraIcon, MicIcon } from './icons';
+import { aiService } from '../services/api';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface HomePageProps {
   onMedicineSearch: (query: string) => void;
@@ -12,7 +13,7 @@ const blobToBase64 = (blob: Blob): Promise<string> => {
     const reader = new FileReader();
     reader.onloadend = () => {
       const base64String = (reader.result as string).split(',')[1];
-      resolve(base64String);
+      resolve(base64String || '');
     };
     reader.onerror = reject;
     reader.readAsDataURL(blob);
@@ -20,16 +21,21 @@ const blobToBase64 = (blob: Blob): Promise<string> => {
 };
 
 const TabButton: React.FC<{ active: boolean; onClick: () => void; children: React.ReactNode }> = ({ active, onClick, children }) => (
-    <button
-        onClick={onClick}
-        className={`w-1/2 py-3 font-bold text-center transition-colors duration-300 rounded-t-lg ${
-            active ? 'bg-[#1E1E1E] text-teal-400' : 'bg-transparent text-gray-400 hover:bg-gray-800/50'
-        }`}
-    >
-        {children}
-    </button>
+  <button
+    onClick={onClick}
+    className={`w-1/2 py-4 font-bold text-center transition-all duration-300 rounded-t-2xl relative ${active ? 'text-teal-400' : 'text-slate-400 hover:text-slate-200'
+      }`}
+  >
+    {children}
+    {active && (
+      <motion.div
+        layoutId="activeTab"
+        className="absolute bottom-0 left-0 right-0 h-1 bg-teal-400"
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+      />
+    )}
+  </button>
 );
-
 
 export const HomePage: React.FC<HomePageProps> = ({ onMedicineSearch, onDiseaseSearch }) => {
   const [medicineQuery, setMedicineQuery] = useState('');
@@ -44,14 +50,17 @@ export const HomePage: React.FC<HomePageProps> = ({ onMedicineSearch, onDiseaseS
       setIsProcessingImage(true);
       try {
         const base64 = await blobToBase64(file);
-        const medicineName = await parsePrescription(base64);
-        setMedicineQuery(medicineName);
-        if (medicineName !== "Error identifying medicine") {
-          onMedicineSearch(medicineName);
+        const response = await aiService.analyzePrescription(base64);
+        const medicines = response.data.medicines;
+
+        // If multiple medicines found, we'll take the first one for search
+        const firstMedicine = medicines.split(',')[0]?.trim();
+        if (firstMedicine) {
+          setMedicineQuery(firstMedicine);
+          onMedicineSearch(firstMedicine);
         }
       } catch (error) {
         console.error("Error processing prescription image:", error);
-        setMedicineQuery("Could not read prescription");
       } finally {
         setIsProcessingImage(false);
       }
@@ -61,102 +70,134 @@ export const HomePage: React.FC<HomePageProps> = ({ onMedicineSearch, onDiseaseS
   const handleScanClick = () => {
     fileInputRef.current?.click();
   };
-  
+
   const handleMedicineSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onMedicineSearch(medicineQuery);
+    if (medicineQuery.trim()) onMedicineSearch(medicineQuery);
   };
 
   const handleDiseaseSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onDiseaseSearch(diseaseQuery);
+    if (diseaseQuery.trim()) onDiseaseSearch(diseaseQuery);
   };
-  
-  const handleTabChange = (tab: 'medicine' | 'disease') => {
-    setActiveTab(tab);
-  };
-
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] text-center">
-      <h1 className="text-4xl md:text-6xl font-extrabold text-white tracking-tight mb-4">
-        Find Your Medicine <span className="text-teal-400">Near You.</span>
-      </h1>
-      <p className="max-w-2xl text-lg md:text-xl text-gray-400 mb-8">
-        Instantly locate pharmacies, compare prices, and get AI-powered recommendations.
-      </p>
+    <div className="flex flex-col items-center justify-center min-h-[70vh] text-center py-12">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <h1 className="text-5xl md:text-7xl font-black text-white tracking-tight mb-6 neon-glow">
+          Smart Medicine <span className="text-teal-400">Locator.</span>
+        </h1>
+        <p className="max-w-xl mx-auto text-lg md:text-xl text-slate-400 mb-12">
+          Instantly locate medications, compare prices, and get AI-powered recommendations in a premium experience.
+        </p>
+      </motion.div>
 
-      <div className="w-full max-w-2xl">
-          <div className="flex">
-              <TabButton active={activeTab === 'medicine'} onClick={() => handleTabChange('medicine')}>
-                  Search by Medicine
-              </TabButton>
-              <TabButton active={activeTab === 'disease'} onClick={() => handleTabChange('disease')}>
-                  Search by Disease
-              </TabButton>
-          </div>
+      <div className="w-full max-w-3xl glass-card overflow-hidden">
+        <div className="flex bg-slate-900/50">
+          <TabButton active={activeTab === 'medicine'} onClick={() => setActiveTab('medicine')}>
+            Search Medicine
+          </TabButton>
+          <TabButton active={activeTab === 'disease'} onClick={() => setActiveTab('disease')}>
+            AI Recommendations
+          </TabButton>
+        </div>
 
-        {activeTab === 'medicine' ? (
-             <div className="bg-[#1E1E1E] rounded-b-2xl rounded-tr-2xl shadow-2xl shadow-teal-900/20 p-2 transition-all">
-                <div className="relative">
-                    <form onSubmit={handleMedicineSubmit} className="flex items-center">
-                        <SearchIcon className="h-6 w-6 text-gray-500 ml-4" />
-                        <input
-                            type="text"
-                            value={medicineQuery}
-                            onChange={(e) => setMedicineQuery(e.target.value)}
-                            placeholder="Enter medicine name (e.g., Paracetamol)"
-                            className="w-full bg-transparent text-lg text-white placeholder-gray-500 border-none focus:ring-0 px-4 py-2"
-                            autoComplete="off"
-                        />
-                        <div className="flex items-center space-x-1 mr-1">
-                            <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
-                            <button type="button" onClick={handleScanClick} className="p-3 rounded-full hover:bg-gray-700 transition-colors" aria-label="Upload or Scan Prescription">
-                                {isProcessingImage ? (
-                                    <div className="w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
-                                ) : (
-                                    <CameraIcon className="h-5 w-5 text-gray-400" />
-                                )}
-                            </button>
-                            <button type="button" className="p-3 rounded-full hover:bg-gray-700 transition-colors" aria-label="Voice Search">
-                                <MicIcon className="h-5 w-5 text-gray-400" />
-                            </button>
-                        </div>
-                    </form>
-                </div>
-                 <button 
-                    onClick={handleMedicineSubmit}
-                    className="mt-4 w-full px-10 py-4 bg-teal-500 text-white font-bold text-lg rounded-full shadow-lg shadow-teal-500/30 hover:bg-teal-400 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-teal-300">
-                    Search Medicine
-                </button>
-            </div>
-        ) : (
-             <div className="bg-[#1E1E1E] rounded-b-2xl rounded-tl-2xl shadow-2xl shadow-cyan-900/20 p-2 transition-all">
-                <form onSubmit={handleDiseaseSubmit} className="flex items-center">
-                    <SearchIcon className="h-6 w-6 text-gray-500 ml-4" />
-                    <input
+        <div className="p-8">
+          <AnimatePresence mode="wait">
+            {activeTab === 'medicine' ? (
+              <motion.div
+                key="medicine-tab"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <form onSubmit={handleMedicineSubmit} className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <SearchIcon className="h-6 w-6 text-slate-500 group-focus-within:text-teal-400 transition-colors" />
+                  </div>
+                  <input
+                    type="text"
+                    value={medicineQuery}
+                    onChange={(e) => setMedicineQuery(e.target.value)}
+                    placeholder="What medicine are you looking for?"
+                    className="w-full h-16 pl-14 pr-32 glass-input text-xl rounded-2xl"
+                  />
+                  <div className="absolute inset-y-0 right-2 flex items-center space-x-2">
+                    <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
+                    <button
+                      type="button"
+                      onClick={handleScanClick}
+                      disabled={isProcessingImage}
+                      className="p-3 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-teal-400 transition-all"
+                    >
+                      {isProcessingImage ? <div className="w-5 h-5 border-2 border-teal-400 border-t-transparent rounded-full animate-spin" /> : <CameraIcon className="h-6 w-6" />}
+                    </button>
+                    <button type="button" className="p-3 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-teal-400 transition-all">
+                      <MicIcon className="h-6 w-6" />
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="disease-tab"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <form onSubmit={handleDiseaseSubmit} className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <SearchIcon className="h-6 w-6 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
+                  </div>
+                  <input
                     type="text"
                     value={diseaseQuery}
                     onChange={(e) => setDiseaseQuery(e.target.value)}
-                    placeholder="Enter disease or symptom (e.g., Headache)"
-                    className="w-full bg-transparent text-lg text-white placeholder-gray-500 border-none focus:ring-0 px-4 py-2"
-                    />
+                    placeholder="Describe your symptoms (e.g., severe headache)"
+                    className="w-full h-16 pl-14 pr-12 glass-input text-xl rounded-2xl focus:border-blue-500"
+                  />
                 </form>
-                <button 
-                    onClick={handleDiseaseSubmit}
-                    className="mt-4 w-full px-10 py-4 bg-cyan-600 text-white font-bold text-lg rounded-full shadow-lg shadow-cyan-500/30 hover:bg-cyan-500 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-cyan-300">
-                    Get Recommendations
-                </button>
-             </div>
-        )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <button
+            onClick={activeTab === 'medicine' ? handleMedicineSubmit : handleDiseaseSubmit}
+            className={`mt-8 w-full h-16 rounded-2xl font-black text-xl tracking-wider transition-all duration-500 transform hover:scale-[1.02] active:scale-[0.98] shadow-2xl ${activeTab === 'medicine'
+                ? 'bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-teal-500/20 hover:shadow-teal-500/40'
+                : 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-blue-500/20 hover:shadow-blue-500/40'
+              }`}
+          >
+            {activeTab === 'medicine' ? 'LOCATE MEDICINE' : 'GET AI ADVICE'}
+          </button>
+        </div>
       </div>
-       <style>{`
-        @keyframes fade-in-down {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in-down { animation: fade-in-down 0.2s ease-out forwards; }
-      `}</style>
+
+      <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8">
+        {[
+          { label: 'Pharmacies', value: '500+' },
+          { label: 'Medicines', value: '10k+' },
+          { label: 'Users', value: '50k+' },
+          { label: 'Reliability', value: '99.9%' }
+        ].map((stat, i) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 + (i * 0.1) }}
+            className="text-center"
+          >
+            <p className="text-3xl font-black text-white mb-1">{stat.value}</p>
+            <p className="text-slate-500 uppercase tracking-widest text-xs font-bold">{stat.label}</p>
+          </motion.div>
+        ))}
+      </div>
     </div>
   );
 };
