@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { authService, reservationService, medicineService } from '../services/api';
+import { authService, reservationService } from '../services/api';
 import { PharmacyOwnerDashboard } from './PharmacyOwnerDashboard';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -8,8 +8,14 @@ export const PharmacyOwnerPage: React.FC = () => {
     const [pharmacy, setPharmacy] = useState<any>(null);
     const [reservations, setReservations] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [isRegistering, setIsRegistering] = useState(false);
+
+    // Form fields
     const [ownerId, setOwnerId] = useState('');
     const [password, setPassword] = useState('');
+    const [pharmacyName, setPharmacyName] = useState('');
+    const [address, setAddress] = useState('');
+    const [contact, setContact] = useState('');
 
     useEffect(() => {
         if (token) {
@@ -20,11 +26,9 @@ export const PharmacyOwnerPage: React.FC = () => {
     const fetchDashboardData = async () => {
         setIsLoading(true);
         try {
-            // In a real app, we'd have a /me endpoint
             const resData = await reservationService.getPharmacyReservations();
             setReservations(resData.data);
 
-            // Mock pharmacy data for dashboard since we don't have /me yet
             const stored = localStorage.getItem('pharmacy');
             if (stored) setPharmacy(JSON.parse(stored));
         } catch (error) {
@@ -35,18 +39,33 @@ export const PharmacyOwnerPage: React.FC = () => {
         }
     };
 
-    const handleLogin = async (e: React.FormEvent) => {
+    const handleAuth = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
         try {
-            const response = await authService.login({ ownerId, password });
-            const { token, pharmacy } = response.data;
+            let response;
+            if (isRegistering) {
+                response = await authService.register({
+                    ownerId,
+                    password,
+                    name: pharmacyName,
+                    address,
+                    contact,
+                    location: { lat: 0, lon: 0 }, // Simplified for demo
+                    operatingHours: '9 AM - 9 PM'
+                });
+            } else {
+                response = await authService.login({ ownerId, password });
+            }
+
+            const { token, pharmacy: authPharmacy } = response.data;
             localStorage.setItem('token', token);
-            localStorage.setItem('pharmacy', JSON.stringify(pharmacy));
+            localStorage.setItem('pharmacy', JSON.stringify(authPharmacy));
             setToken(token);
-            setPharmacy(pharmacy);
-        } catch (error) {
-            alert('Login failed. Please check your credentials.');
+            setPharmacy(authPharmacy);
+        } catch (error: any) {
+            const msg = error.response?.data?.message || 'Authentication failed. Please check your credentials.';
+            alert(msg);
         } finally {
             setIsLoading(false);
         }
@@ -75,39 +94,90 @@ export const PharmacyOwnerPage: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="max-w-md mx-auto glass-card p-10 mt-12"
             >
-                <h1 className="text-3xl font-black text-white mb-2 uppercase tracking-tight text-center">OWNER LOGIN</h1>
-                <p className="text-slate-500 text-center mb-10 text-xs font-bold tracking-widest uppercase">Manage your pharmacy & inventory</p>
+                <h1 className="text-3xl font-black text-white mb-2 uppercase tracking-tight text-center">
+                    {isRegistering ? 'OWNER SIGNUP' : 'OWNER LOGIN'}
+                </h1>
+                <p className="text-slate-500 text-center mb-10 text-xs font-bold tracking-widest uppercase">
+                    {isRegistering ? 'Register your pharmacy' : 'Manage your pharmacy & inventory'}
+                </p>
 
-                <form onSubmit={handleLogin} className="space-y-6">
+                <form onSubmit={handleAuth} className="space-y-4">
+                    {isRegistering && (
+                        <>
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 ml-1">Pharmacy Name</label>
+                                <input
+                                    type="text"
+                                    value={pharmacyName}
+                                    onChange={(e) => setPharmacyName(e.target.value)}
+                                    className="w-full h-12 px-4 glass-input rounded-xl text-sm"
+                                    placeholder="MediPlus Pharmacy"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 ml-1">Address</label>
+                                <input
+                                    type="text"
+                                    value={address}
+                                    onChange={(e) => setAddress(e.target.value)}
+                                    className="w-full h-12 px-4 glass-input rounded-xl text-sm"
+                                    placeholder="123 Health Street"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px) font-black text-slate-500 uppercase tracking-widest mb-1 ml-1">Contact No.</label>
+                                <input
+                                    type="text"
+                                    value={contact}
+                                    onChange={(e) => setContact(e.target.value)}
+                                    className="w-full h-12 px-4 glass-input rounded-xl text-sm"
+                                    placeholder="+91 9876543210"
+                                    required
+                                />
+                            </div>
+                        </>
+                    )}
                     <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Owner ID</label>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 ml-1">Owner ID</label>
                         <input
                             type="text"
                             value={ownerId}
                             onChange={(e) => setOwnerId(e.target.value)}
-                            className="w-full h-14 px-4 glass-input rounded-xl"
+                            className="w-full h-12 px-4 glass-input rounded-xl text-sm"
                             placeholder="PH-12345"
                             required
                         />
                     </div>
                     <div>
-                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Password</label>
+                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 ml-1">Password</label>
                         <input
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full h-14 px-4 glass-input rounded-xl"
+                            className="w-full h-12 px-4 glass-input rounded-xl text-sm"
                             placeholder="••••••••"
                             required
                         />
                     </div>
+
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className="w-full h-16 bg-teal-500 text-white font-black rounded-2xl shadow-xl shadow-teal-500/20 hover:bg-teal-400 transition-all uppercase tracking-widest mt-4"
+                        className="w-full h-14 bg-teal-500 text-white font-black rounded-2xl shadow-xl shadow-teal-500/20 hover:bg-teal-400 transition-all uppercase tracking-widest mt-4 text-sm"
                     >
-                        {isLoading ? 'SECURE LOGGING...' : 'ACCESS DASHBOARD'}
+                        {isLoading ? 'PROCESSING...' : (isRegistering ? 'CREATE ACCOUNT' : 'ACCESS DASHBOARD')}
                     </button>
+
+                    <button
+                        type="button"
+                        onClick={() => setIsRegistering(!isRegistering)}
+                        className="w-full text-slate-400 hover:text-white text-[10px] font-black uppercase tracking-widest mt-2"
+                    >
+                        {isRegistering ? 'Already have an account? Login' : "Don't have an account? Sign Up"}
+                    </button>
+
                     <p className="text-[10px] text-slate-600 text-center uppercase font-bold tracking-tighter mt-4">
                         Secure 256-bit encrypted session
                     </p>
@@ -117,8 +187,8 @@ export const PharmacyOwnerPage: React.FC = () => {
     }
 
     return (
-        <div className="py-8">
-            <div className="flex justify-between items-center mb-12">
+        <div className="py-8 px-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
                 <div>
                     <h1 className="text-4xl font-black text-white tracking-tight uppercase">{pharmacy?.name || 'DASHBOARD'}</h1>
                     <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-xs">Pharamcy Management System</p>
@@ -131,7 +201,7 @@ export const PharmacyOwnerPage: React.FC = () => {
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-1 gap-10">
+            <div className="grid grid-cols-1 gap-10">
                 <section>
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-2xl font-black text-white tracking-tight uppercase">Incoming Reservations</h2>
