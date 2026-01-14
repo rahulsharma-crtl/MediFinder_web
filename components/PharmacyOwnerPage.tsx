@@ -90,6 +90,13 @@ export const PharmacyOwnerPage: React.FC = () => {
         }
     };
 
+    const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const numericValue = e.target.value.replace(/[^0-9]/g, '');
+        if (numericValue.length <= 10) {
+            setPhone(numericValue);
+        }
+    };
+
     const handleGetLocation = () => {
         setIsFetchingLocation(true);
         if (!navigator.geolocation) {
@@ -165,10 +172,12 @@ export const PharmacyOwnerPage: React.FC = () => {
                             <input
                                 type="tel"
                                 value={phone}
-                                onChange={(e) => setPhone(e.target.value)}
+                                onChange={handlePhoneChange}
                                 className="w-full h-12 px-4 glass-input rounded-xl text-sm"
                                 placeholder="9876543210"
                                 required
+                                maxLength={10}
+                                pattern="\d{10}"
                             />
                         </div>
                         <button
