@@ -14,7 +14,32 @@ const app: Application = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'https://medifinder-web.onren.th',
+    /^https:\/\/.*\.vercel\.app$/  // Allow all Vercel preview deployments
+];
+
+app.use(cors({
+    origin: function (origin, callback) {
+        // Allow requests with no origin (mobile apps, Postman, etc)
+        if (!origin) return callback(null, true);
+
+        // Check if origin is allowed
+        const isAllowed = allowedOrigins.some(allowed => {
+            if (typeof allowed === 'string') return allowed === origin;
+            return allowed.test(origin);
+        });
+
+        if (isAllowed) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true
+}));
 app.use(express.json());
 
 // Routes
