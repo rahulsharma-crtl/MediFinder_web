@@ -1,5 +1,4 @@
 import express, { Request, Response } from 'express';
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import Pharmacy from '../models/Pharmacy';
 
@@ -15,14 +14,13 @@ router.post('/register', async (req: Request, res: Response) => {
             address,
             location,
             contact,
-            operatingHours,
-            ownerId: contact, // Use contact as ownerId for backward compatibility if needed
+            operatingHours
         });
 
         await pharmacy.save();
 
         const token = jwt.sign(
-            { pharmacyId: pharmacy._id, ownerId: contact },
+            { pharmacyId: pharmacy._id },
             process.env.JWT_SECRET || 'secret',
             { expiresIn: '1d' }
         );
@@ -44,29 +42,7 @@ router.post('/login-by-phone', async (req: Request, res: Response) => {
         }
 
         const token = jwt.sign(
-            { pharmacyId: pharmacy._id, ownerId: pharmacy.ownerId },
-            process.env.JWT_SECRET || 'secret',
-            { expiresIn: '1d' }
-        );
-
-        res.json({ pharmacy, token });
-    } catch (error) {
-        res.status(500).json({ message: 'Login error', error });
-    }
-});
-
-// Keep legacy login for compatibility during transition if needed
-router.post('/login', async (req: Request, res: Response) => {
-    try {
-        const { ownerId } = req.body;
-
-        const pharmacy = await Pharmacy.findOne({ ownerId });
-        if (!pharmacy) {
-            return res.status(400).json({ message: 'Invalid credentials' });
-        }
-
-        const token = jwt.sign(
-            { pharmacyId: pharmacy._id, ownerId },
+            { pharmacyId: pharmacy._id },
             process.env.JWT_SECRET || 'secret',
             { expiresIn: '1d' }
         );

@@ -11,7 +11,6 @@ export interface IPharmacy extends Document {
   operatingHours: string;
   isOpen24x7: boolean;
   rating: number;
-  ownerId: string;
 }
 
 const PharmacySchema: Schema = new Schema({
@@ -24,8 +23,7 @@ const PharmacySchema: Schema = new Schema({
   contact: { type: String, required: true },
   operatingHours: { type: String, required: true },
   isOpen24x7: { type: Boolean, default: false },
-  rating: { type: Number, default: 0 },
-  ownerId: { type: String, required: false }
+  rating: { type: Number, default: 0 }
 }, { timestamps: true });
 
 export default mongoose.model<IPharmacy>('Pharmacy', PharmacySchema);

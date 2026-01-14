@@ -221,101 +221,100 @@ export const PharmacyOwnerPage: React.FC = () => {
                 <p className="text-[10px] text-slate-600 text-center uppercase font-bold tracking-tighter mt-4">
                     Secure 256-bit encrypted session
                 </p>
-            </form>
             </motion.div >
         );
     }
 
-return (
-    <div className="py-8 px-4">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
-            <div>
-                <h1 className="text-4xl font-black text-white tracking-tight uppercase">{pharmacy?.name || 'DASHBOARD'}</h1>
-                <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-xs">Pharamcy Management System</p>
-            </div>
-            <button
-                onClick={handleLogout}
-                className="h-12 px-6 bg-slate-800 text-slate-400 hover:text-white font-black text-xs tracking-widest uppercase rounded-xl border border-slate-700 transition-all"
-            >
-                LOGOUT
-            </button>
-        </div>
-
-        <div className="grid grid-cols-1 gap-10">
-            <section>
-                <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-black text-white tracking-tight uppercase">Incoming Reservations</h2>
-                    <span className="px-3 py-1 bg-teal-500/10 text-teal-400 border border-teal-500/20 rounded-lg text-[10px] font-black tracking-widest">{reservations.length} ACTIVE</span>
+    return (
+        <div className="py-8 px-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
+                <div>
+                    <h1 className="text-4xl font-black text-white tracking-tight uppercase">{pharmacy?.name || 'DASHBOARD'}</h1>
+                    <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-xs">Pharamcy Management System</p>
                 </div>
+                <button
+                    onClick={handleLogout}
+                    className="h-12 px-6 bg-slate-800 text-slate-400 hover:text-white font-black text-xs tracking-widest uppercase rounded-xl border border-slate-700 transition-all"
+                >
+                    LOGOUT
+                </button>
+            </div>
 
-                {reservations.length === 0 ? (
-                    <div className="glass-card p-20 text-center border-dashed border-slate-700">
-                        <p className="text-slate-500 font-bold uppercase tracking-widest">No active reservations at the moment</p>
+            <div className="grid grid-cols-1 gap-10">
+                <section>
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-2xl font-black text-white tracking-tight uppercase">Incoming Reservations</h2>
+                        <span className="px-3 py-1 bg-teal-500/10 text-teal-400 border border-teal-500/20 rounded-lg text-[10px] font-black tracking-widest">{reservations.length} ACTIVE</span>
                     </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {reservations.map((res: any) => (
-                            <motion.div
-                                key={res._id}
-                                layout
-                                className="glass-card p-6 border-l-4 border-l-teal-500"
-                            >
-                                <div className="flex justify-between items-start mb-6">
-                                    <div>
-                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Medicine Requested</p>
-                                        <h3 className="text-xl font-black text-white uppercase tracking-tight">{res.medicineId?.name || 'Unknown'}</h3>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Status</p>
-                                        <span className={`text-[10px] font-black px-2 py-1 rounded-md border ${res.status === 'Pending' ? 'text-amber-400 border-amber-400/20 bg-amber-400/10' :
-                                            res.status === 'Confirmed' ? 'text-teal-400 border-teal-400/20 bg-teal-400/10' : 'text-slate-500 border-slate-700 bg-slate-800/50'
-                                            }`}>
-                                            {res.status.toUpperCase()}
-                                        </span>
-                                    </div>
-                                </div>
 
-                                <div className="grid grid-cols-2 gap-4 mb-6 p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
-                                    <div>
-                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Customer</p>
-                                        <p className="text-white font-bold text-sm tracking-tight">{res.customerName}</p>
+                    {reservations.length === 0 ? (
+                        <div className="glass-card p-20 text-center border-dashed border-slate-700">
+                            <p className="text-slate-500 font-bold uppercase tracking-widest">No active reservations at the moment</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {reservations.map((res: any) => (
+                                <motion.div
+                                    key={res._id}
+                                    layout
+                                    className="glass-card p-6 border-l-4 border-l-teal-500"
+                                >
+                                    <div className="flex justify-between items-start mb-6">
+                                        <div>
+                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Medicine Requested</p>
+                                            <h3 className="text-xl font-black text-white uppercase tracking-tight">{res.medicineId?.name || 'Unknown'}</h3>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Status</p>
+                                            <span className={`text-[10px] font-black px-2 py-1 rounded-md border ${res.status === 'Pending' ? 'text-amber-400 border-amber-400/20 bg-amber-400/10' :
+                                                res.status === 'Confirmed' ? 'text-teal-400 border-teal-400/20 bg-teal-400/10' : 'text-slate-500 border-slate-700 bg-slate-800/50'
+                                                }`}>
+                                                {res.status.toUpperCase()}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Phone</p>
-                                        <p className="text-teal-400 font-black text-sm tracking-tighter">{res.customerPhone}</p>
-                                    </div>
-                                </div>
 
-                                <div className="flex gap-2">
-                                    {res.status === 'Pending' && (
+                                    <div className="grid grid-cols-2 gap-4 mb-6 p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
+                                        <div>
+                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Customer</p>
+                                            <p className="text-white font-bold text-sm tracking-tight">{res.customerName}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Phone</p>
+                                            <p className="text-teal-400 font-black text-sm tracking-tighter">{res.customerPhone}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-2">
+                                        {res.status === 'Pending' && (
+                                            <button
+                                                onClick={() => handleUpdateStatus(res._id, 'Confirmed')}
+                                                className="flex-1 h-12 bg-teal-500 text-white font-black text-xs tracking-widest rounded-lg"
+                                            >
+                                                CONFIRM
+                                            </button>
+                                        )}
+                                        {res.status === 'Confirmed' && (
+                                            <button
+                                                onClick={() => handleUpdateStatus(res._id, 'PickedUp')}
+                                                className="flex-1 h-12 bg-emerald-500 text-white font-black text-xs tracking-widest rounded-lg"
+                                            >
+                                                PICKED UP
+                                            </button>
+                                        )}
                                         <button
-                                            onClick={() => handleUpdateStatus(res._id, 'Confirmed')}
-                                            className="flex-1 h-12 bg-teal-500 text-white font-black text-xs tracking-widest rounded-lg"
+                                            onClick={() => handleUpdateStatus(res._id, 'Cancelled')}
+                                            className="h-12 px-4 bg-slate-800 text-rose-500/50 hover:text-rose-500 font-black text-xs tracking-widest rounded-lg border border-slate-700 transition-all"
                                         >
-                                            CONFIRM
+                                            X
                                         </button>
-                                    )}
-                                    {res.status === 'Confirmed' && (
-                                        <button
-                                            onClick={() => handleUpdateStatus(res._id, 'PickedUp')}
-                                            className="flex-1 h-12 bg-emerald-500 text-white font-black text-xs tracking-widest rounded-lg"
-                                        >
-                                            PICKED UP
-                                        </button>
-                                    )}
-                                    <button
-                                        onClick={() => handleUpdateStatus(res._id, 'Cancelled')}
-                                        className="h-12 px-4 bg-slate-800 text-rose-500/50 hover:text-rose-500 font-black text-xs tracking-widest rounded-lg border border-slate-700 transition-all"
-                                    >
-                                        X
-                                    </button>
-                                </div>
-                            </motion.div>
-                        ))}
-                    </div>
-                )}
-            </section>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
+                    )}
+                </section>
+            </div>
         </div>
-    </div>
-);
+    );
 };
