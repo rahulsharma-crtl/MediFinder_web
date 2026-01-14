@@ -3,17 +3,17 @@
 @tailwind utilities;
 
 :root {
-  --glass-bg: rgba(255, 255, 255, 0.05);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-blur: blur(12px);
+  --glass-bg: rgba(24, 24, 27, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: blur(16px);
   --accent-teal: #14b8a6;
   --accent-blue: #3b82f6;
 }
 
 body {
-  background: radial-gradient(circle at top right, #1e293b, #0f172a);
-  color: #f8fafc;
-  min-height: screen;
+  background: radial-gradient(circle at top center, #18181b, #09090b);
+  color: #f4f4f5;
+  min-height: 100vh;
 }
 
 .glass-card {
@@ -21,8 +21,8 @@ body {
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
-  border-radius: 1rem;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  border-radius: 1.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
 .glass-input {
@@ -48,12 +48,28 @@ body {
 }
 
 @keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0px); }
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
 }
 
 /* Accessibility font sizes */
-.font-size-base { font-size: 1rem; }
-.font-size-lg { font-size: 1.125rem; }
-.font-size-xl { font-size: 1.25rem; }
+.font-size-base {
+  font-size: 1rem;
+}
+
+.font-size-lg {
+  font-size: 1.125rem;
+}
+
+.font-size-xl {
+  font-size: 1.25rem;
+}
