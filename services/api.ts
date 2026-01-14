@@ -30,7 +30,7 @@ export const aiService = {
 };
 
 export const authService = {
-    login: (credentials: any) => api.post('/auth/login', credentials),
+    loginByPhone: (contact: string) => api.post('/auth/login-by-phone', { contact }),
     register: (data: any) => api.post('/auth/register', data)
 };
 

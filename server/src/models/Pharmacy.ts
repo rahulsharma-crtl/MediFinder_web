@@ -25,7 +25,7 @@ const PharmacySchema: Schema = new Schema({
   operatingHours: { type: String, required: true },
   isOpen24x7: { type: Boolean, default: false },
   rating: { type: Number, default: 0 },
-  ownerId: { type: String, required: true }
+  ownerId: { type: String, required: false }
 }, { timestamps: true });
 
 export default mongoose.model<IPharmacy>('Pharmacy', PharmacySchema);

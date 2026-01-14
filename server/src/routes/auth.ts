@@ -8,11 +8,7 @@ const router = express.Router();
 // Pharmacy Owner Registration
 router.post('/register', async (req: Request, res: Response) => {
     try {
-        const { name, address, location, contact, operatingHours, ownerId, password } = req.body;
-
-        // In a real app, user model would handle passwords
-        // For this prototype, we're simplifying but hashing the password
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const { name, address, location, contact, operatingHours } = req.body;
 
         const pharmacy = new Pharmacy({
             name,
@@ -20,14 +16,13 @@ router.post('/register', async (req: Request, res: Response) => {
             location,
             contact,
             operatingHours,
-            ownerId,
-            // Simplify: password would usually be in a User model
+            ownerId: contact, // Use contact as ownerId for backward compatibility if needed
         });
 
         await pharmacy.save();
 
         const token = jwt.sign(
-            { pharmacyId: pharmacy._id, ownerId },
+            { pharmacyId: pharmacy._id, ownerId: contact },
             process.env.JWT_SECRET || 'secret',
             { expiresIn: '1d' }
         );
@@ -38,18 +33,38 @@ router.post('/register', async (req: Request, res: Response) => {
     }
 });
 
-// Pharmacy Owner Login
+// Pharmacy Owner Login by Phone
+router.post('/login-by-phone', async (req: Request, res: Response) => {
+    try {
+        const { contact } = req.body;
+
+        const pharmacy = await Pharmacy.findOne({ contact });
+        if (!pharmacy) {
+            return res.status(404).json({ message: 'Pharmacy not found' });
+        }
+
+        const token = jwt.sign(
+            { pharmacyId: pharmacy._id, ownerId: pharmacy.ownerId },
+            process.env.JWT_SECRET || 'secret',
+            { expiresIn: '1d' }
+        );
+
+        res.json({ pharmacy, token });
+    } catch (error) {
+        res.status(500).json({ message: 'Login error', error });
+    }
+});
+
+// Keep legacy login for compatibility during transition if needed
 router.post('/login', async (req: Request, res: Response) => {
     try {
-        const { ownerId, password } = req.body;
+        const { ownerId } = req.body;
 
         const pharmacy = await Pharmacy.findOne({ ownerId });
         if (!pharmacy) {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
 
-        // In a real prototype, you'd check bcrypt.compare(password, pharmacy.password)
-        // For now, accepting any password for the sake of the demo, but generating a real JWT
         const token = jwt.sign(
             { pharmacyId: pharmacy._id, ownerId },
             process.env.JWT_SECRET || 'secret',
