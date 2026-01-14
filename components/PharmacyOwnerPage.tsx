@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { authService, reservationService } from '../services/api';
 import { PharmacyOwnerDashboard } from './PharmacyOwnerDashboard';
 import { motion, AnimatePresence } from 'framer-motion';
+import { reverseGeocode } from '../services/geminiService';
 
 export const PharmacyOwnerPage: React.FC = () => {
     const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
@@ -97,12 +98,23 @@ export const PharmacyOwnerPage: React.FC = () => {
             return;
         }
         navigator.geolocation.getCurrentPosition(
-            (position) => {
+            async (position) => {
+                const { latitude, longitude } = position.coords;
                 setLocation({
-                    lat: position.coords.latitude,
-                    lon: position.coords.longitude
+                    lat: latitude,
+                    lon: longitude
                 });
-                setIsFetchingLocation(false);
+
+                // Auto-fill address from coordinates
+                try {
+                    const fetchedAddress = await reverseGeocode(latitude, longitude);
+                    setAddress(fetchedAddress);
+                } catch (error) {
+                    console.error('Could not determine address:', error);
+                    // Location is still set, user can manually enter address
+                } finally {
+                    setIsFetchingLocation(false);
+                }
             },
             (error) => {
                 alert('Could not get your location. Please enable location services.');
