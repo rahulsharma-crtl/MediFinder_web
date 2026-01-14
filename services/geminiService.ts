@@ -36,8 +36,8 @@ export const parsePrescription = async (imageBase64: string): Promise<string> =>
     };
 
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: { parts: [imagePart, textPart] },
+      model: 'gemini-2.5-flash',
+      contents: { parts: [imagePart, textPart] },
     });
 
     return response.text.trim();
@@ -100,7 +100,7 @@ export const parsePriceSlip = async (imageBase64: string): Promise<InventoryItem
     const jsonString = response.text.trim();
     if (jsonString.startsWith('[') && jsonString.endsWith(']')) {
       const result: Omit<InventoryItem, 'stock'>[] = JSON.parse(jsonString);
-      return result.map(item => ({...item, stock: StockStatus.Available}));
+      return result.map(item => ({ ...item, stock: StockStatus.Available }));
     }
     console.error("Gemini API returned non-JSON response:", jsonString);
     return [];
@@ -108,7 +108,7 @@ export const parsePriceSlip = async (imageBase64: string): Promise<InventoryItem
   } catch (error) {
     console.error("Error parsing price slip with Gemini API:", error);
     if (error && (error.toString().includes('RESOURCE_EXHAUSTED') || error.toString().includes('429'))) {
-        throw new Error("API Quota Exceeded. Please check your plan and billing details, or try again later.");
+      throw new Error("API Quota Exceeded. Please check your plan and billing details, or try again later.");
     }
     throw new Error("Could not parse image with AI service. Please ensure the image is clear and try again.");
   }
@@ -125,20 +125,20 @@ export const getMedicineRecommendations = async (diseaseQuery: string): Promise<
     console.error("Gemini API key not configured.");
     // Return a mock response for demonstration purposes
     if (diseaseQuery.toLowerCase().includes('fever')) {
-        return "Paracetamol, Ibuprofen, Dolo 650";
+      return "Paracetamol, Ibuprofen, Dolo 650";
     }
-     if (diseaseQuery.toLowerCase().includes('headache')) {
-        return "Paracetamol, Ibuprofen, Aspirin";
+    if (diseaseQuery.toLowerCase().includes('headache')) {
+      return "Paracetamol, Ibuprofen, Aspirin";
     }
     return ""; // a fallback for mock
   }
 
   try {
     const prompt = `Based on the user's query for a disease or symptom, recommend relevant medicine names. List common over-the-counter or prescription medicines. Provide the response as a single, comma-separated string of the top 1-3 medicine names. For example, for 'headache', return 'Paracetamol, Ibuprofen'. User query: '${diseaseQuery}'`;
-    
+
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
+      model: 'gemini-2.5-flash',
+      contents: prompt,
     });
 
     return response.text.trim();
@@ -160,14 +160,14 @@ export const validateMedicineName = async (medicineName: string): Promise<{ vali
     // Mock response for demonstration
     const lowerCaseName = medicineName.toLowerCase();
     const knownMedicines = ['paracetamol', 'ibuprofen', 'metformin', 'aspirin', 'atorvastatin', 'amoxicillin', 'cetirizine', 'metformin 500mg', 'dolo 650', 'crocin 650'];
-    
+
     if (knownMedicines.includes(lowerCaseName)) {
-        const properNameMappings: {[key: string]: string} = {'dolo 650': 'Dolo 650', 'crocin 650': 'Crocin 650'};
-        const properName = properNameMappings[lowerCaseName] || medicineName.charAt(0).toUpperCase() + medicineName.slice(1).toLowerCase();
-        return { valid: true, correctedName: properName, reason: '' };
+      const properNameMappings: { [key: string]: string } = { 'dolo 650': 'Dolo 650', 'crocin 650': 'Crocin 650' };
+      const properName = properNameMappings[lowerCaseName] || medicineName.charAt(0).toUpperCase() + medicineName.slice(1).toLowerCase();
+      return { valid: true, correctedName: properName, reason: '' };
     }
     if (lowerCaseName === 'paracetmol') {
-        return { valid: true, correctedName: 'Paracetamol', reason: 'Corrected spelling.' };
+      return { valid: true, correctedName: 'Paracetamol', reason: 'Corrected spelling.' };
     }
     if (medicineName.length < 3) {
       return { valid: false, correctedName: '', reason: `"${medicineName}" is too short to be a valid medicine name.` };
@@ -202,12 +202,12 @@ export const validateMedicineName = async (medicineName: string): Promise<{ vali
 
     const jsonString = response.text.trim();
     if (jsonString.startsWith('{') && jsonString.endsWith('}')) {
-        const result = JSON.parse(jsonString);
-        return result;
+      const result = JSON.parse(jsonString);
+      return result;
     }
     // Fallback if the response isn't valid JSON, assume it's okay to proceed
     return { valid: true, correctedName: medicineName, reason: '' };
-    
+
   } catch (error) {
     console.error("Error validating medicine name with Gemini API:", error);
     // Fallback to allow search if validation service fails, to not block the user
@@ -257,10 +257,10 @@ export const getMedicineAlternative = async (medicineName: string): Promise<stri
       return 'Ibuprofen';
     }
     if (lowerCaseName.includes('dolo 650')) {
-        return 'Crocin 650';
+      return 'Crocin 650';
     }
     if (lowerCaseName.includes('ibuprofen')) {
-        return 'Paracetamol';
+      return 'Paracetamol';
     }
     return "";
   }
@@ -279,26 +279,65 @@ export const getMedicineAlternative = async (medicineName: string): Promise<stri
 
 /**
  * Gets a human-readable address from latitude and longitude coordinates.
+ * Uses OpenStreetMap's Nominatim API for accurate geocoding.
  * @param lat The latitude.
  * @param lon The longitude.
  * @returns A promise that resolves to an address string.
  */
 export const reverseGeocode = async (lat: number, lon: number): Promise<string> => {
-  if (!ai) {
-    console.error("Gemini API key not configured.");
-    // Mock response for demonstration
-    return "123 Mockingbird Lane, Bengaluru, Karnataka 560001, India";
-  }
-
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: `Provide the full, formatted street address for the following GPS coordinates: latitude ${lat}, longitude ${lon}. The address should be suitable for display and include street, city, state, and postal code if available. For example: '1600 Amphitheatre Parkway, Mountain View, CA 94043, USA'.`,
-    });
-    return response.text.trim();
+    // Use OpenStreetMap Nominatim API for accurate reverse geocoding
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`,
+      {
+        headers: {
+          'User-Agent': 'MediFinder/1.0' // Required by Nominatim usage policy
+        }
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Nominatim API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.error) {
+      throw new Error(data.error);
+    }
+
+    // Format the address from the structured data
+    const addr = data.address;
+    const parts = [];
+
+    // Build address string from available components
+    if (addr.road || addr.street) parts.push(addr.road || addr.street);
+    if (addr.suburb || addr.neighbourhood) parts.push(addr.suburb || addr.neighbourhood);
+    if (addr.city || addr.town || addr.village) parts.push(addr.city || addr.town || addr.village);
+    if (addr.state) parts.push(addr.state);
+    if (addr.postcode) parts.push(addr.postcode);
+    if (addr.country) parts.push(addr.country);
+
+    const formattedAddress = parts.length > 0 ? parts.join(', ') : data.display_name;
+
+    return formattedAddress;
   } catch (error) {
-    console.error("Error with reverse geocoding from Gemini API:", error);
-    return `Could not determine address. Lat: ${lat}, Lon: ${lon}`;
+    console.error("Error with reverse geocoding from Nominatim API:", error);
+
+    // Fallback: try using Gemini AI as last resort
+    if (ai) {
+      try {
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: `Provide the full, formatted street address for the following GPS coordinates in India: latitude ${lat}, longitude ${lon}. The address should be suitable for display and include street, city, state, and postal code if available. For example: 'MG Road, Bengaluru, Karnataka 560001, India'.`,
+        });
+        return response.text.trim();
+      } catch (geminiError) {
+        console.error("Gemini fallback also failed:", geminiError);
+      }
+    }
+
+    return `Location: ${lat.toFixed(4)}, ${lon.toFixed(4)}`;
   }
 };
 
@@ -335,15 +374,15 @@ export const geocodeAddress = async (address: string): Promise<{ lat: number; lo
 
     const jsonString = response.text.trim();
     if (jsonString.startsWith('{') && jsonString.endsWith('}')) {
-        const result = JSON.parse(jsonString);
-        if (result.lat && result.lon) {
-            return result;
-        }
+      const result = JSON.parse(jsonString);
+      if (result.lat && result.lon) {
+        return result;
+      }
     }
-     // Fallback for non-JSON or invalid response
+    // Fallback for non-JSON or invalid response
     console.error("Geocoding failed to return valid JSON. Address:", address);
     return { lat: 12.9716, lon: 77.5946 }; // Fallback coordinate
-    
+
   } catch (error) {
     console.error("Error geocoding address with Gemini API:", error);
     // Fallback if API fails
