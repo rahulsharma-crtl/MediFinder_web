@@ -23,10 +23,16 @@ const blobToBase64 = (blob: Blob): Promise<string> => {
 const TabButton: React.FC<{ active: boolean; onClick: () => void; children: React.ReactNode }> = ({ active, onClick, children }) => (
   <button
     onClick={onClick}
-    className={`px-8 py-3.5 font-bold text-center transition-all duration-300 relative rounded-t-xl border-none outline-none cursor-pointer ${active ? 'text-teal-400 bg-[#1a1a1a]' : 'text-slate-400 hover:text-slate-200 bg-transparent'
+    className={`px-8 py-4 font-bold text-center transition-all duration-300 relative rounded-t-xl border-none outline-none cursor-pointer ${active ? 'text-white bg-[#262626]' : 'text-slate-400 hover:text-white bg-transparent'
       }`}
   >
     {children}
+    {active && (
+      <motion.div
+        layoutId="activeTabUnderline"
+        className="absolute bottom-0 left-0 right-0 h-1 bg-accent-teal"
+      />
+    )}
   </button>
 );
 
@@ -80,10 +86,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onMedicineSearch, onDiseaseS
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-4xl md:text-6xl font-bold text-white tracking-tight mb-4">
-          Find Your Medicine <span className="text-teal-400">Near You.</span>
+        <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight mb-4">
+          Find Your Medicine <span className="text-accent-teal-vibrant">Near You.</span>
         </h1>
-        <p className="max-w-2xl mx-auto text-lg text-slate-400 mb-12">
+        <p className="max-w-2xl mx-auto text-lg text-slate-300 font-medium mb-12">
           Instantly locate pharmacies, compare prices, and get AI-powered recommendations.
         </p>
       </motion.div>
@@ -98,7 +104,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onMedicineSearch, onDiseaseS
           </TabButton>
         </div>
 
-        <div className="bg-[#1a1a1a] p-6 pt-8 rounded-b-3xl rounded-tr-3xl shadow-2xl relative">
+        <div className="bg-[#262626] p-7 pt-9 rounded-b-3xl rounded-tr-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative border border-white/5">
           <AnimatePresence mode="wait">
             {activeTab === 'medicine' ? (
               <motion.div
@@ -110,27 +116,28 @@ export const HomePage: React.FC<HomePageProps> = ({ onMedicineSearch, onDiseaseS
               >
                 <form onSubmit={handleMedicineSubmit} className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <SearchIcon className="h-5 w-5 text-slate-500" />
+                    <SearchIcon className="h-5 w-5 text-slate-400 group-focus-within:text-accent-teal-vibrant transition-colors" />
                   </div>
                   <input
                     type="text"
                     value={medicineQuery}
                     onChange={(e) => setMedicineQuery(e.target.value)}
                     placeholder="Enter medicine name (e.g., Paracetamol)"
-                    className="w-full h-14 pl-12 pr-32 bg-[#0f0f0f] border border-white/10 focus:border-teal-500/50 text-white rounded-2xl transition-all outline-none"
+                    className="w-full h-16 pl-12 pr-32 bg-[#0c0c0c] border border-white/10 focus:border-accent-teal text-white rounded-2xl transition-all outline-none text-lg shadow-inner"
                   />
-                  <div className="absolute inset-y-0 right-2 flex items-center space-x-1">
+                  <div className="absolute inset-y-0 right-3 flex items-center space-x-2">
                     <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
                     <button
                       type="button"
                       onClick={handleScanClick}
                       disabled={isProcessingImage}
-                      className="p-2.5 rounded-xl hover:bg-white/5 text-slate-400 hover:text-white transition-all bg-transparent"
+                      className="p-3 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition-all bg-transparent"
+                      title="Scan Prescription"
                     >
-                      {isProcessingImage ? <div className="w-5 h-5 border-2 border-teal-400 border-t-transparent rounded-full animate-spin" /> : <CameraIcon className="h-5 w-5" />}
+                      {isProcessingImage ? <div className="w-5 h-5 border-2 border-accent-teal border-t-transparent rounded-full animate-spin" /> : <CameraIcon className="h-6 w-6" />}
                     </button>
-                    <button type="button" className="p-2.5 rounded-xl hover:bg-white/5 text-slate-400 hover:text-white transition-all bg-transparent">
-                      <MicIcon className="h-5 w-5" />
+                    <button type="button" className="p-3 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition-all bg-transparent" title="Voice Search">
+                      <MicIcon className="h-6 w-6" />
                     </button>
                   </div>
                 </form>
@@ -145,14 +152,14 @@ export const HomePage: React.FC<HomePageProps> = ({ onMedicineSearch, onDiseaseS
               >
                 <form onSubmit={handleDiseaseSubmit} className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <SearchIcon className="h-5 w-5 text-slate-500" />
+                    <SearchIcon className="h-5 w-5 text-slate-400 group-focus-within:text-accent-teal-vibrant transition-colors" />
                   </div>
                   <input
                     type="text"
                     value={diseaseQuery}
                     onChange={(e) => setDiseaseQuery(e.target.value)}
                     placeholder="Describe your symptoms (e.g., severe headache)"
-                    className="w-full h-14 pl-12 pr-12 bg-[#0f0f0f] border border-white/10 focus:border-teal-500/50 text-white rounded-2xl transition-all outline-none"
+                    className="w-full h-16 pl-12 pr-12 bg-[#0c0c0c] border border-white/10 focus:border-accent-teal text-white rounded-2xl transition-all outline-none text-lg shadow-inner"
                   />
                 </form>
               </motion.div>
@@ -161,17 +168,17 @@ export const HomePage: React.FC<HomePageProps> = ({ onMedicineSearch, onDiseaseS
 
           <button
             onClick={activeTab === 'medicine' ? handleMedicineSubmit : handleDiseaseSubmit}
-            className="mt-6 w-full h-14 bg-accent-teal hover:bg-teal-600 text-white font-bold rounded-2xl transition-all shadow-lg shadow-teal-900/20 border-none cursor-pointer"
+            className="mt-8 w-full h-16 btn-primary text-xl active:scale-[0.98]"
           >
-            {activeTab === 'medicine' ? 'Search Medicine' : 'Get AI Advice'}
+            {activeTab === 'medicine' ? 'Locate Medicine' : 'Get AI Advice'}
           </button>
         </div>
       </div>
 
       {/* Floating Buttons EN and HC */}
-      <div className="fixed bottom-8 right-8 flex flex-col space-y-4 items-end z-50">
-        <button className="w-12 h-12 bg-[#1a1a1a] border border-white/10 rounded-full flex items-center justify-center text-xs font-bold text-slate-300 hover:bg-white/10 transition-colors cursor-pointer">EN</button>
-        <button className="w-12 h-12 bg-[#1a1a1a] border border-white/10 rounded-full flex items-center justify-center text-sm font-bold text-slate-300 hover:bg-white/10 transition-colors cursor-pointer">HC</button>
+      <div className="fixed bottom-10 right-10 flex flex-col space-y-4 items-end z-50">
+        <button className="w-14 h-14 bg-[#262626] border-2 border-white/20 rounded-full flex items-center justify-center text-sm font-black text-white hover:bg-accent-teal hover:border-accent-teal-vibrant shadow-2xl transition-all cursor-pointer">EN</button>
+        <button className="w-14 h-14 bg-[#262626] border-2 border-white/20 rounded-full flex items-center justify-center text-lg font-black text-white hover:bg-accent-teal hover:border-accent-teal-vibrant shadow-2xl transition-all cursor-pointer">HC</button>
       </div>
     </div>
   );

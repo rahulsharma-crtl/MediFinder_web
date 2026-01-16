@@ -157,24 +157,24 @@ export const PharmacyOwnerPage: React.FC = () => {
                 className="max-w-xl mx-auto py-12"
             >
                 <div className="text-center mb-12">
-                    <h1 className="text-5xl font-bold text-white mb-4">
+                    <h1 className="text-5xl font-black text-white mb-4">
                         Welcome, Pharmacy Owner
                     </h1>
-                    <p className="text-slate-400 text-lg">
-                        Please enter your pharmacy details to manage your inventory and connect with customers.
+                    <p className="text-slate-300 text-lg font-medium">
+                        Please enter your pharmacy details to manage your inventory.
                     </p>
                 </div>
 
-                <div className="bg-[#1a1a1a] p-10 rounded-3xl shadow-2xl border border-white/5">
+                <div className="bg-[#262626] p-10 rounded-3xl shadow-2xl border border-white/10">
                     {!showRegisterFields ? (
                         <form onSubmit={handleCheckPhone} className="space-y-6">
                             <div>
-                                <label className="block text-sm font-semibold text-slate-300 mb-2 ml-1">Phone Number</label>
+                                <label className="block text-sm font-bold text-slate-200 mb-2 ml-1">Phone Number</label>
                                 <input
                                     type="tel"
                                     value={phone}
                                     onChange={handlePhoneChange}
-                                    className="w-full h-14 px-5 bg-[#0f0f0f] border border-white/10 rounded-xl text-white focus:border-teal-500/50 transition-all outline-none"
+                                    className="w-full h-16 px-5 bg-[#0f0f0f] border border-white/20 rounded-xl text-white focus:border-accent-teal transition-all outline-none text-lg"
                                     placeholder="Enter 10-digit number"
                                     required
                                     maxLength={10}
@@ -184,65 +184,65 @@ export const PharmacyOwnerPage: React.FC = () => {
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full h-14 bg-teal-500 hover:bg-teal-400 text-white font-bold rounded-2xl transition-all shadow-lg shadow-teal-900/20 border-none cursor-pointer"
+                                className="w-full h-16 btn-primary active:scale-[0.98]"
                             >
-                                {isLoading ? 'Checking...' : 'Continue'}
+                                {isLoading ? 'Checking...' : 'Continue to Dashboard'}
                             </button>
                         </form>
                     ) : (
                         <form onSubmit={handleRegister} className="space-y-6">
                             <div>
-                                <label className="block text-sm font-semibold text-slate-300 mb-2 ml-1">Pharmacy Name</label>
+                                <label className="block text-sm font-bold text-slate-200 mb-2 ml-1">Pharmacy Name</label>
                                 <input
                                     type="text"
                                     value={pharmacyName}
                                     onChange={(e) => setPharmacyName(e.target.value)}
-                                    className="w-full h-14 px-5 bg-[#0f0f0f] border border-white/10 rounded-xl text-white focus:border-teal-500/50 transition-all outline-none"
+                                    className="w-full h-16 px-5 bg-[#0f0f0f] border border-white/20 rounded-xl text-white focus:border-accent-teal transition-all outline-none text-lg"
                                     placeholder="e.g., Apollo Pharmacy"
                                     required
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-semibold text-slate-300 mb-2 ml-1">Phone Number</label>
+                                <label className="block text-sm font-bold text-slate-200 mb-2 ml-1">Phone Number</label>
                                 <input
                                     type="tel"
                                     value={phone}
                                     readOnly
-                                    className="w-full h-14 px-5 bg-[#0f0f0f]/50 border border-white/5 rounded-xl text-slate-500 outline-none"
+                                    className="w-full h-16 px-5 bg-[#0f0f0f]/50 border border-white/5 rounded-xl text-slate-500 outline-none text-lg"
                                 />
                             </div>
                             <div>
                                 <div className="flex justify-between items-center mb-2 px-1">
-                                    <label className="text-sm font-semibold text-slate-300">Full Address</label>
+                                    <label className="text-sm font-bold text-slate-200">Full Address</label>
                                     <button
                                         type="button"
                                         onClick={handleGetLocation}
                                         disabled={isFetchingLocation}
-                                        className="text-teal-400 hover:text-teal-300 text-xs font-bold flex items-center gap-1 transition-colors bg-transparent border-none cursor-pointer"
+                                        className="text-accent-teal-vibrant hover:text-white text-sm font-black flex items-center gap-1 transition-colors bg-transparent border-none cursor-pointer"
                                     >
-                                        <MapPinIcon className="h-3.5 w-3.5" />
-                                        {isFetchingLocation ? 'Determining Location...' : 'Use My Current Location'}
+                                        <MapPinIcon className="h-4 w-4" />
+                                        {isFetchingLocation ? 'Fetching...' : 'Use Current Location'}
                                     </button>
                                 </div>
                                 <textarea
                                     value={address}
                                     onChange={(e) => setAddress(e.target.value)}
-                                    className="w-full h-32 p-5 bg-[#0f0f0f] border border-white/10 rounded-xl text-white focus:border-teal-500/50 transition-all outline-none resize-none"
-                                    placeholder="Enter your pharmacy's full address"
+                                    className="w-full h-32 p-5 bg-[#0f0f0f] border border-white/20 rounded-xl text-white focus:border-accent-teal transition-all outline-none resize-none text-lg"
+                                    placeholder="Enter full address"
                                     required
                                 />
                             </div>
                             <button
                                 type="submit"
                                 disabled={isLoading || !location}
-                                className="w-full h-14 bg-teal-500 hover:bg-teal-400 text-white font-bold rounded-2xl transition-all shadow-lg shadow-teal-900/20 disabled:bg-slate-800 disabled:text-slate-500 disabled:shadow-none disabled:cursor-not-allowed border-none cursor-pointer"
+                                className="w-full h-16 btn-primary active:scale-[0.98] disabled:bg-slate-800 disabled:text-slate-500 disabled:shadow-none"
                             >
-                                {isLoading ? 'Registering...' : 'Complete Profile'}
+                                {isLoading ? 'Processing...' : 'Complete Profile'}
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setShowRegisterFields(false)}
-                                className="w-full text-slate-500 hover:text-slate-300 text-sm font-semibold transition-colors bg-transparent border-none cursor-pointer"
+                                className="w-full text-slate-400 hover:text-white text-sm font-bold transition-colors bg-transparent border-none cursor-pointer mt-2"
                             >
                                 Back to Login
                             </button>
@@ -257,12 +257,12 @@ export const PharmacyOwnerPage: React.FC = () => {
         <div className="py-12">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
                 <div>
-                    <h1 className="text-4xl font-bold text-white tracking-tight">{pharmacy?.name || 'Dashboard'}</h1>
-                    <p className="text-slate-500 text-sm font-medium">Pharmacy Management Portal</p>
+                    <h1 className="text-4xl font-black text-white tracking-tight">{pharmacy?.name || 'Dashboard'}</h1>
+                    <p className="text-slate-400 text-sm font-bold uppercase tracking-widest">Pharmacy Portal</p>
                 </div>
                 <button
                     onClick={handleLogout}
-                    className="h-12 px-6 bg-[#1a1a1a] text-slate-300 hover:text-white font-bold text-sm rounded-xl border border-white/5 transition-all cursor-pointer"
+                    className="h-12 px-6 bg-[#262626] text-white hover:bg-accent-teal font-bold text-sm rounded-xl border-2 border-white/10 transition-all cursor-pointer shadow-lg"
                 >
                     Logout
                 </button>
@@ -270,53 +270,53 @@ export const PharmacyOwnerPage: React.FC = () => {
 
             <div className="grid grid-cols-1 gap-12">
                 <section>
-                    <div className="flex items-center justify-between mb-8">
-                        <h2 className="text-2xl font-bold text-white">Active Reservations</h2>
-                        <span className="px-3 py-1 bg-teal-500/10 text-teal-400 border border-teal-500/20 rounded-lg text-xs font-bold">{reservations.length} Orders</span>
+                    <div className="flex items-center justify-between mb-8 px-2">
+                        <h2 className="text-2xl font-black text-white">Active Reservations</h2>
+                        <span className="px-4 py-1.5 bg-accent-teal text-white rounded-lg text-sm font-black shadow-[0_0_15px_rgba(20,184,166,0.3)]">{reservations.length} Pending</span>
                     </div>
 
                     {reservations.length === 0 ? (
-                        <div className="bg-[#1a1a1a] p-20 text-center rounded-3xl border border-dashed border-white/10">
-                            <p className="text-slate-500 font-medium">No active reservations at the moment</p>
+                        <div className="bg-[#262626] p-20 text-center rounded-3xl border border-dashed border-white/10">
+                            <p className="text-slate-500 font-bold text-lg">No active reservations</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             {reservations.map((res: any) => (
                                 <motion.div
                                     key={res._id}
                                     layout
-                                    className="bg-[#1a1a1a] p-6 rounded-3xl border border-white/5"
+                                    className="bg-[#262626] p-7 rounded-3xl border border-white/10 shadow-xl"
                                 >
                                     <div className="flex justify-between items-start mb-6">
                                         <div>
-                                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Medicine</p>
-                                            <h3 className="text-xl font-bold text-white">{res.medicineId?.name || 'Unknown'}</h3>
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Medicine</p>
+                                            <h3 className="text-xl font-black text-white">{res.medicineId?.name || 'Unknown'}</h3>
                                         </div>
                                         <div className="text-right">
-                                            <span className={`text-[10px] font-bold px-2 py-1 rounded-md border ${res.status === 'Pending' ? 'text-amber-400 border-amber-400/20 bg-amber-400/10' :
-                                                res.status === 'Confirmed' ? 'text-teal-400 border-teal-400/20 bg-teal-400/10' : 'text-slate-500 border-slate-700 bg-slate-800/50'
+                                            <span className={`text-[10px] font-black px-3 py-1.5 rounded-lg border-2 ${res.status === 'Pending' ? 'text-amber-400 border-amber-400/40 bg-amber-400/10' :
+                                                res.status === 'Confirmed' ? 'text-accent-teal-vibrant border-teal-400/40 bg-teal-400/10' : 'text-slate-400 border-white/10 bg-black/20'
                                                 }`}>
                                                 {res.status.toUpperCase()}
                                             </span>
                                         </div>
                                     </div>
 
-                                    <div className="space-y-3 mb-8">
+                                    <div className="space-y-4 mb-8 bg-black/30 p-4 rounded-2xl border border-white/5">
                                         <div className="flex justify-between text-sm">
-                                            <span className="text-slate-500">Customer</span>
-                                            <span className="text-white font-semibold">{res.customerName}</span>
+                                            <span className="text-slate-400 font-medium">Customer</span>
+                                            <span className="text-white font-black">{res.customerName}</span>
                                         </div>
                                         <div className="flex justify-between text-sm">
-                                            <span className="text-slate-500">Contact</span>
-                                            <span className="text-teal-400 font-bold">{res.customerPhone}</span>
+                                            <span className="text-slate-400 font-medium">Contact</span>
+                                            <span className="text-accent-teal-vibrant font-black">{res.customerPhone}</span>
                                         </div>
                                     </div>
 
-                                    <div className="flex gap-2">
+                                    <div className="flex gap-3">
                                         {res.status === 'Pending' && (
                                             <button
                                                 onClick={() => handleUpdateStatus(res._id, 'Confirmed')}
-                                                className="flex-1 h-12 bg-teal-500 hover:bg-teal-400 text-white font-bold text-sm rounded-xl transition-all border-none cursor-pointer"
+                                                className="flex-1 h-12 bg-accent-teal hover:bg-accent-teal-vibrant text-white font-black text-sm rounded-xl transition-all border-none cursor-pointer shadow-lg"
                                             >
                                                 Confirm
                                             </button>
@@ -324,14 +324,14 @@ export const PharmacyOwnerPage: React.FC = () => {
                                         {res.status === 'Confirmed' && (
                                             <button
                                                 onClick={() => handleUpdateStatus(res._id, 'PickedUp')}
-                                                className="flex-1 h-12 bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-sm rounded-xl transition-all border-none cursor-pointer"
+                                                className="flex-1 h-12 bg-emerald-500 hover:bg-emerald-400 text-white font-black text-sm rounded-xl transition-all border-none cursor-pointer shadow-lg"
                                             >
                                                 Mark Picked Up
                                             </button>
                                         )}
                                         <button
                                             onClick={() => handleUpdateStatus(res._id, 'Cancelled')}
-                                            className="h-12 px-4 bg-white/5 text-slate-500 hover:text-rose-500 rounded-xl transition-all border-none cursor-pointer"
+                                            className="h-12 px-5 bg-white/5 text-slate-500 hover:text-white hover:bg-rose-500/20 rounded-xl transition-all border-none cursor-pointer"
                                         >
                                             Cancel
                                         </button>
