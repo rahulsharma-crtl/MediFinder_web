@@ -17,8 +17,9 @@ const PORT = process.env.PORT || 5000;
 const allowedOrigins = [
     'http://localhost:3000',
     'http://localhost:5173',
-    'https://medifinder-web.onren.th',
-    /^https:\/\/.*\.vercel\.app$/  // Allow all Vercel preview deployments
+    'https://medifinder-web.onrender.com', // Fixed typo
+    /^https:\/\/medifinder-web.*\.vercel\.app$/, // Specific Vercel pattern
+    /^https:\/\/.*\.onrender\.com$/ // Allow any Render subdomain
 ];
 
 app.use(cors({
