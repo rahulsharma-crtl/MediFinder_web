@@ -23,7 +23,7 @@ const blobToBase64 = (blob: Blob): Promise<string> => {
 const TabButton: React.FC<{ active: boolean; onClick: () => void; children: React.ReactNode }> = ({ active, onClick, children }) => (
   <button
     onClick={onClick}
-    className={`px-8 py-3.5 font-bold text-center transition-all duration-300 relative rounded-t-xl ${active ? 'text-teal-400 bg-[#1a1a1a]' : 'text-slate-400 hover:text-slate-200'
+    className={`px-8 py-3.5 font-bold text-center transition-all duration-300 relative rounded-t-xl border-none outline-none cursor-pointer ${active ? 'text-teal-400 bg-[#1a1a1a]' : 'text-slate-400 hover:text-slate-200 bg-transparent'
       }`}
   >
     {children}
@@ -88,8 +88,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onMedicineSearch, onDiseaseS
         </p>
       </motion.div>
 
-      <div className="w-full max-w-2xl">
-        <div className="flex space-x-1 mb-0 relative z-10">
+      <div className="w-full max-w-2xl px-4">
+        <div className="flex space-x-1 mb-0 relative z-10 overflow-x-auto scrollbar-hide">
           <TabButton active={activeTab === 'medicine'} onClick={() => setActiveTab('medicine')}>
             Search by Medicine
           </TabButton>
@@ -117,7 +117,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onMedicineSearch, onDiseaseS
                     value={medicineQuery}
                     onChange={(e) => setMedicineQuery(e.target.value)}
                     placeholder="Enter medicine name (e.g., Paracetamol)"
-                    className="w-full h-14 pl-12 pr-32 bg-[#0f0f0f] border border-white/5 focus:border-teal-500/50 text-white rounded-2xl transition-all"
+                    className="w-full h-14 pl-12 pr-32 bg-[#0f0f0f] border border-white/10 focus:border-teal-500/50 text-white rounded-2xl transition-all outline-none"
                   />
                   <div className="absolute inset-y-0 right-2 flex items-center space-x-1">
                     <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
@@ -125,11 +125,11 @@ export const HomePage: React.FC<HomePageProps> = ({ onMedicineSearch, onDiseaseS
                       type="button"
                       onClick={handleScanClick}
                       disabled={isProcessingImage}
-                      className="p-2.5 rounded-xl hover:bg-white/5 text-slate-400 hover:text-white transition-all"
+                      className="p-2.5 rounded-xl hover:bg-white/5 text-slate-400 hover:text-white transition-all bg-transparent"
                     >
                       {isProcessingImage ? <div className="w-5 h-5 border-2 border-teal-400 border-t-transparent rounded-full animate-spin" /> : <CameraIcon className="h-5 w-5" />}
                     </button>
-                    <button type="button" className="p-2.5 rounded-xl hover:bg-white/5 text-slate-400 hover:text-white transition-all">
+                    <button type="button" className="p-2.5 rounded-xl hover:bg-white/5 text-slate-400 hover:text-white transition-all bg-transparent">
                       <MicIcon className="h-5 w-5" />
                     </button>
                   </div>
@@ -152,7 +152,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onMedicineSearch, onDiseaseS
                     value={diseaseQuery}
                     onChange={(e) => setDiseaseQuery(e.target.value)}
                     placeholder="Describe your symptoms (e.g., severe headache)"
-                    className="w-full h-14 pl-12 pr-12 bg-[#0f0f0f] border border-white/5 focus:border-teal-500/50 text-white rounded-2xl transition-all"
+                    className="w-full h-14 pl-12 pr-12 bg-[#0f0f0f] border border-white/10 focus:border-teal-500/50 text-white rounded-2xl transition-all outline-none"
                   />
                 </form>
               </motion.div>
@@ -161,7 +161,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onMedicineSearch, onDiseaseS
 
           <button
             onClick={activeTab === 'medicine' ? handleMedicineSubmit : handleDiseaseSubmit}
-            className="mt-6 w-full h-14 bg-[#14b8a6] hover:bg-[#0d9488] text-white font-bold rounded-2xl transition-all shadow-lg shadow-teal-900/20"
+            className="mt-6 w-full h-14 bg-accent-teal hover:bg-teal-600 text-white font-bold rounded-2xl transition-all shadow-lg shadow-teal-900/20 border-none cursor-pointer"
           >
             {activeTab === 'medicine' ? 'Search Medicine' : 'Get AI Advice'}
           </button>
@@ -170,8 +170,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onMedicineSearch, onDiseaseS
 
       {/* Floating Buttons EN and HC */}
       <div className="fixed bottom-8 right-8 flex flex-col space-y-4 items-end z-50">
-        <button className="w-12 h-12 bg-[#1a1a1a] border border-white/10 rounded-full flex items-center justify-center text-xs font-bold text-slate-300 hover:bg-white/5">EN</button>
-        <button className="w-12 h-12 bg-[#1a1a1a] border border-white/10 rounded-full flex items-center justify-center text-sm font-bold text-slate-300 hover:bg-white/5">HC</button>
+        <button className="w-12 h-12 bg-[#1a1a1a] border border-white/10 rounded-full flex items-center justify-center text-xs font-bold text-slate-300 hover:bg-white/10 transition-colors cursor-pointer">EN</button>
+        <button className="w-12 h-12 bg-[#1a1a1a] border border-white/10 rounded-full flex items-center justify-center text-sm font-bold text-slate-300 hover:bg-white/10 transition-colors cursor-pointer">HC</button>
       </div>
     </div>
   );

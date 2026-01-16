@@ -1,13 +1,16 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-accent-teal: #14b8a6;
+  --color-accent-blue: #3b82f6;
+  --color-glass-bg: rgba(20, 20, 20, 0.6);
+  --color-glass-border: rgba(255, 255, 255, 0.08);
+
+  --shadow-neon: 0 0 10px rgba(20, 184, 166, 0.5);
+}
 
 :root {
-  --glass-bg: rgba(20, 20, 20, 0.6);
-  --glass-border: rgba(255, 255, 255, 0.08);
   --glass-blur: blur(12px);
-  --accent-teal: #14b8a6;
-  --accent-blue: #3b82f6;
 }
 
 body {
@@ -17,32 +20,43 @@ body {
   font-family: 'Nunito Sans', sans-serif;
 }
 
-.glass-card {
-  background: var(--glass-bg);
+/* Reset buttons to be transparent by default unless specified */
+button {
+  background-color: transparent;
+  color: inherit;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  outline: inherit;
+}
+
+@utility glass-card {
+  background: var(--color-glass-bg);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--color-glass-border);
   border-radius: 1.25rem;
 }
 
-.glass-input {
+@utility glass-input {
   background: rgba(15, 15, 15, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: white;
   transition: all 0.3s ease;
+
+  &:focus {
+    border-color: var(--color-accent-teal);
+    background: rgba(20, 20, 20, 0.7);
+    outline: none;
+  }
 }
 
-.glass-input:focus {
-  border-color: var(--accent-teal);
-  background: rgba(20, 20, 20, 0.7);
-  outline: none;
+@utility neon-glow {
+  text-shadow: var(--shadow-neon);
 }
 
-.neon-glow {
-  text-shadow: 0 0 10px rgba(20, 184, 166, 0.5);
-}
-
-.animate-float {
+@utility animate-float {
   animation: float 6s ease-in-out infinite;
 }
 

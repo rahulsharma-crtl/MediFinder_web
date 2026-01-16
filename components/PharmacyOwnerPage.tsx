@@ -184,7 +184,7 @@ export const PharmacyOwnerPage: React.FC = () => {
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full h-14 bg-teal-500 hover:bg-teal-400 text-white font-bold rounded-2xl transition-all shadow-lg shadow-teal-900/20"
+                                className="w-full h-14 bg-teal-500 hover:bg-teal-400 text-white font-bold rounded-2xl transition-all shadow-lg shadow-teal-900/20 border-none cursor-pointer"
                             >
                                 {isLoading ? 'Checking...' : 'Continue'}
                             </button>
@@ -218,7 +218,7 @@ export const PharmacyOwnerPage: React.FC = () => {
                                         type="button"
                                         onClick={handleGetLocation}
                                         disabled={isFetchingLocation}
-                                        className="text-teal-400 hover:text-teal-300 text-xs font-bold flex items-center gap-1 transition-colors"
+                                        className="text-teal-400 hover:text-teal-300 text-xs font-bold flex items-center gap-1 transition-colors bg-transparent border-none cursor-pointer"
                                     >
                                         <MapPinIcon className="h-3.5 w-3.5" />
                                         {isFetchingLocation ? 'Determining Location...' : 'Use My Current Location'}
@@ -235,14 +235,14 @@ export const PharmacyOwnerPage: React.FC = () => {
                             <button
                                 type="submit"
                                 disabled={isLoading || !location}
-                                className="w-full h-14 bg-teal-500 hover:bg-teal-400 text-white font-bold rounded-2xl transition-all shadow-lg shadow-teal-900/20 disabled:bg-slate-800 disabled:text-slate-500 disabled:shadow-none disabled:cursor-not-allowed"
+                                className="w-full h-14 bg-teal-500 hover:bg-teal-400 text-white font-bold rounded-2xl transition-all shadow-lg shadow-teal-900/20 disabled:bg-slate-800 disabled:text-slate-500 disabled:shadow-none disabled:cursor-not-allowed border-none cursor-pointer"
                             >
                                 {isLoading ? 'Registering...' : 'Complete Profile'}
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setShowRegisterFields(false)}
-                                className="w-full text-slate-500 hover:text-slate-300 text-sm font-semibold transition-colors"
+                                className="w-full text-slate-500 hover:text-slate-300 text-sm font-semibold transition-colors bg-transparent border-none cursor-pointer"
                             >
                                 Back to Login
                             </button>
@@ -262,7 +262,7 @@ export const PharmacyOwnerPage: React.FC = () => {
                 </div>
                 <button
                     onClick={handleLogout}
-                    className="h-12 px-6 bg-[#1a1a1a] text-slate-300 hover:text-white font-bold text-sm rounded-xl border border-white/5 transition-all"
+                    className="h-12 px-6 bg-[#1a1a1a] text-slate-300 hover:text-white font-bold text-sm rounded-xl border border-white/5 transition-all cursor-pointer"
                 >
                     Logout
                 </button>
@@ -316,7 +316,7 @@ export const PharmacyOwnerPage: React.FC = () => {
                                         {res.status === 'Pending' && (
                                             <button
                                                 onClick={() => handleUpdateStatus(res._id, 'Confirmed')}
-                                                className="flex-1 h-12 bg-teal-500 hover:bg-teal-400 text-white font-bold text-sm rounded-xl transition-all"
+                                                className="flex-1 h-12 bg-teal-500 hover:bg-teal-400 text-white font-bold text-sm rounded-xl transition-all border-none cursor-pointer"
                                             >
                                                 Confirm
                                             </button>
@@ -324,14 +324,14 @@ export const PharmacyOwnerPage: React.FC = () => {
                                         {res.status === 'Confirmed' && (
                                             <button
                                                 onClick={() => handleUpdateStatus(res._id, 'PickedUp')}
-                                                className="flex-1 h-12 bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-sm rounded-xl transition-all"
+                                                className="flex-1 h-12 bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-sm rounded-xl transition-all border-none cursor-pointer"
                                             >
                                                 Mark Picked Up
                                             </button>
                                         )}
                                         <button
                                             onClick={() => handleUpdateStatus(res._id, 'Cancelled')}
-                                            className="h-12 px-4 bg-white/5 text-slate-500 hover:text-rose-500 rounded-xl transition-all"
+                                            className="h-12 px-4 bg-white/5 text-slate-500 hover:text-rose-500 rounded-xl transition-all border-none cursor-pointer"
                                         >
                                             Cancel
                                         </button>
