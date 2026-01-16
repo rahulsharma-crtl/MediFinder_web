@@ -44,18 +44,27 @@ export const PharmacyOwnerPage: React.FC = () => {
     const handleCheckPhone = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
+        console.log("Checking phone number:", phone);
         try {
             const response = await authService.loginByPhone(phone);
+            console.log("Phone check success:", response.data);
             const { token, pharmacy: authPharmacy } = response.data;
             localStorage.setItem('token', token);
             localStorage.setItem('pharmacy', JSON.stringify(authPharmacy));
             setToken(token);
             setPharmacy(authPharmacy);
         } catch (error: any) {
+            console.error("Phone check error details:", {
+                status: error.response?.status,
+                data: error.response?.data,
+                message: error.message,
+                config: error.config
+            });
             if (error.response?.status === 404) {
                 setShowRegisterFields(true);
             } else {
-                alert(error.response?.data?.message || 'Error checking phone number.');
+                const errorMsg = error.response?.data?.message || error.message || 'Error checking phone number.';
+                alert(`Error: ${errorMsg}. Check console for details.`);
             }
         } finally {
             setIsLoading(false);
