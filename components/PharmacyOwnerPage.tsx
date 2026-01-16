@@ -3,13 +3,13 @@ import { authService, reservationService } from '../services/api';
 import { PharmacyOwnerDashboard } from './PharmacyOwnerDashboard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { reverseGeocode } from '../services/geminiService';
+import { MapPinIcon } from './icons';
 
 export const PharmacyOwnerPage: React.FC = () => {
     const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
     const [pharmacy, setPharmacy] = useState<any>(null);
     const [reservations, setReservations] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [isRegistering, setIsRegistering] = useState(false);
 
     // Form fields
     const [phone, setPhone] = useState('');
@@ -112,13 +112,11 @@ export const PharmacyOwnerPage: React.FC = () => {
                     lon: longitude
                 });
 
-                // Auto-fill address from coordinates
                 try {
                     const fetchedAddress = await reverseGeocode(latitude, longitude);
                     setAddress(fetchedAddress);
                 } catch (error) {
-                    console.error('Could not determine address:', error);
-                    // Location is still set, user can manually enter address
+                    console.error('Could determine address:', error);
                 } finally {
                     setIsFetchingLocation(false);
                 }
@@ -154,140 +152,148 @@ export const PharmacyOwnerPage: React.FC = () => {
     if (!token) {
         return (
             <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="max-w-md mx-auto glass-card p-10 mt-12"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="max-w-xl mx-auto py-12"
             >
-                <h1 className="text-3xl font-black text-white mb-2 uppercase tracking-tight text-center">
-                    {showRegisterFields ? 'Pharmacy Registration' : 'Pharmacy Login'}
-                </h1>
-                <p className="text-slate-500 text-center mb-10 text-xs font-bold tracking-widest uppercase">
-                    {showRegisterFields ? 'Complete your profile' : 'Enter phone number to continue'}
-                </p>
+                <div className="text-center mb-12">
+                    <h1 className="text-5xl font-bold text-white mb-4">
+                        Welcome, Pharmacy Owner
+                    </h1>
+                    <p className="text-slate-400 text-lg">
+                        Please enter your pharmacy details to manage your inventory and connect with customers.
+                    </p>
+                </div>
 
-                {!showRegisterFields ? (
-                    <form onSubmit={handleCheckPhone} className="space-y-4">
-                        <div>
-                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 ml-1">Phone Number</label>
-                            <input
-                                type="tel"
-                                value={phone}
-                                onChange={handlePhoneChange}
-                                className="w-full h-12 px-4 glass-input rounded-xl text-sm"
-                                placeholder="9876543210"
-                                required
-                                maxLength={10}
-                                pattern="\d{10}"
-                            />
-                        </div>
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="w-full h-14 bg-teal-500 text-white font-black rounded-2xl shadow-xl shadow-teal-500/20 hover:bg-teal-400 transition-all uppercase tracking-widest mt-4 text-sm"
-                        >
-                            {isLoading ? 'CHECKING...' : 'CONTINUE'}
-                        </button>
-                    </form>
-                ) : (
-                    <form onSubmit={handleRegister} className="space-y-4">
-                        <div>
-                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 ml-1">Pharmacy Name</label>
-                            <input
-                                type="text"
-                                value={pharmacyName}
-                                onChange={(e) => setPharmacyName(e.target.value)}
-                                className="w-full h-12 px-4 glass-input rounded-xl text-sm"
-                                placeholder="MediPlus Pharmacy"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 ml-1">Address</label>
-                            <input
-                                type="text"
-                                value={address}
-                                onChange={(e) => setAddress(e.target.value)}
-                                className="w-full h-12 px-4 glass-input rounded-xl text-sm"
-                                placeholder="123 Health Street"
-                                required
-                            />
-                        </div>
-                        <div className="pt-2">
+                <div className="bg-[#1a1a1a] p-10 rounded-3xl shadow-2xl border border-white/5">
+                    {!showRegisterFields ? (
+                        <form onSubmit={handleCheckPhone} className="space-y-6">
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-300 mb-2 ml-1">Phone Number</label>
+                                <input
+                                    type="tel"
+                                    value={phone}
+                                    onChange={handlePhoneChange}
+                                    className="w-full h-14 px-5 bg-[#0f0f0f] border border-white/10 rounded-xl text-white focus:border-teal-500/50 transition-all outline-none"
+                                    placeholder="Enter 10-digit number"
+                                    required
+                                    maxLength={10}
+                                    pattern="\d{10}"
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className="w-full h-14 bg-teal-500 hover:bg-teal-400 text-white font-bold rounded-2xl transition-all shadow-lg shadow-teal-900/20"
+                            >
+                                {isLoading ? 'Checking...' : 'Continue'}
+                            </button>
+                        </form>
+                    ) : (
+                        <form onSubmit={handleRegister} className="space-y-6">
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-300 mb-2 ml-1">Pharmacy Name</label>
+                                <input
+                                    type="text"
+                                    value={pharmacyName}
+                                    onChange={(e) => setPharmacyName(e.target.value)}
+                                    className="w-full h-14 px-5 bg-[#0f0f0f] border border-white/10 rounded-xl text-white focus:border-teal-500/50 transition-all outline-none"
+                                    placeholder="e.g., Apollo Pharmacy"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-300 mb-2 ml-1">Phone Number</label>
+                                <input
+                                    type="tel"
+                                    value={phone}
+                                    readOnly
+                                    className="w-full h-14 px-5 bg-[#0f0f0f]/50 border border-white/5 rounded-xl text-slate-500 outline-none"
+                                />
+                            </div>
+                            <div>
+                                <div className="flex justify-between items-center mb-2 px-1">
+                                    <label className="text-sm font-semibold text-slate-300">Full Address</label>
+                                    <button
+                                        type="button"
+                                        onClick={handleGetLocation}
+                                        disabled={isFetchingLocation}
+                                        className="text-teal-400 hover:text-teal-300 text-xs font-bold flex items-center gap-1 transition-colors"
+                                    >
+                                        <MapPinIcon className="h-3.5 w-3.5" />
+                                        {isFetchingLocation ? 'Determining Location...' : 'Use My Current Location'}
+                                    </button>
+                                </div>
+                                <textarea
+                                    value={address}
+                                    onChange={(e) => setAddress(e.target.value)}
+                                    className="w-full h-32 p-5 bg-[#0f0f0f] border border-white/10 rounded-xl text-white focus:border-teal-500/50 transition-all outline-none resize-none"
+                                    placeholder="Enter your pharmacy's full address"
+                                    required
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={isLoading || !location}
+                                className="w-full h-14 bg-teal-500 hover:bg-teal-400 text-white font-bold rounded-2xl transition-all shadow-lg shadow-teal-900/20 disabled:bg-slate-800 disabled:text-slate-500 disabled:shadow-none disabled:cursor-not-allowed"
+                            >
+                                {isLoading ? 'Registering...' : 'Complete Profile'}
+                            </button>
                             <button
                                 type="button"
-                                onClick={handleGetLocation}
-                                disabled={isFetchingLocation}
-                                className={`w-full h-12 border border-dashed rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${location ? 'border-teal-500 text-teal-400' : 'border-slate-700 text-slate-500 hover:text-white hover:border-slate-500'}`}
+                                onClick={() => setShowRegisterFields(false)}
+                                className="w-full text-slate-500 hover:text-slate-300 text-sm font-semibold transition-colors"
                             >
-                                {isFetchingLocation ? 'FETCHING...' : location ? 'LOCATION CAPTURED ✓' : 'FETCH CURRENT LOCATION FROM MAPS'}
+                                Back to Login
                             </button>
-                        </div>
-                        <button
-                            type="submit"
-                            disabled={isLoading || !location}
-                            className="w-full h-14 bg-teal-500 text-white font-black rounded-2xl shadow-xl shadow-teal-500/20 hover:bg-teal-400 transition-all uppercase tracking-widest mt-4 text-sm disabled:bg-slate-700 disabled:shadow-none"
-                        >
-                            {isLoading ? 'REGISTERING...' : 'CREATE ACCOUNT'}
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setShowRegisterFields(false)}
-                            className="w-full text-slate-400 hover:text-white text-[10px] font-black uppercase tracking-widest mt-2"
-                        >
-                            Back to Login
-                        </button>
-                    </form>
-                )}
-
-                <p className="text-[10px] text-slate-600 text-center uppercase font-bold tracking-tighter mt-4">
-                    Secure 256-bit encrypted session
-                </p>
+                        </form>
+                    )}
+                </div>
             </motion.div >
         );
     }
 
     return (
-        <div className="py-8 px-4">
+        <div className="py-12">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
                 <div>
-                    <h1 className="text-4xl font-black text-white tracking-tight uppercase">{pharmacy?.name || 'DASHBOARD'}</h1>
-                    <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-xs">Pharamcy Management System</p>
+                    <h1 className="text-4xl font-bold text-white tracking-tight">{pharmacy?.name || 'Dashboard'}</h1>
+                    <p className="text-slate-500 text-sm font-medium">Pharmacy Management Portal</p>
                 </div>
                 <button
                     onClick={handleLogout}
-                    className="h-12 px-6 bg-slate-800 text-slate-400 hover:text-white font-black text-xs tracking-widest uppercase rounded-xl border border-slate-700 transition-all"
+                    className="h-12 px-6 bg-[#1a1a1a] text-slate-300 hover:text-white font-bold text-sm rounded-xl border border-white/5 transition-all"
                 >
-                    LOGOUT
+                    Logout
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 gap-10">
+            <div className="grid grid-cols-1 gap-12">
                 <section>
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-2xl font-black text-white tracking-tight uppercase">Incoming Reservations</h2>
-                        <span className="px-3 py-1 bg-teal-500/10 text-teal-400 border border-teal-500/20 rounded-lg text-[10px] font-black tracking-widest">{reservations.length} ACTIVE</span>
+                    <div className="flex items-center justify-between mb-8">
+                        <h2 className="text-2xl font-bold text-white">Active Reservations</h2>
+                        <span className="px-3 py-1 bg-teal-500/10 text-teal-400 border border-teal-500/20 rounded-lg text-xs font-bold">{reservations.length} Orders</span>
                     </div>
 
                     {reservations.length === 0 ? (
-                        <div className="glass-card p-20 text-center border-dashed border-slate-700">
-                            <p className="text-slate-500 font-bold uppercase tracking-widest">No active reservations at the moment</p>
+                        <div className="bg-[#1a1a1a] p-20 text-center rounded-3xl border border-dashed border-white/10">
+                            <p className="text-slate-500 font-medium">No active reservations at the moment</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {reservations.map((res: any) => (
                                 <motion.div
                                     key={res._id}
                                     layout
-                                    className="glass-card p-6 border-l-4 border-l-teal-500"
+                                    className="bg-[#1a1a1a] p-6 rounded-3xl border border-white/5"
                                 >
                                     <div className="flex justify-between items-start mb-6">
                                         <div>
-                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Medicine Requested</p>
-                                            <h3 className="text-xl font-black text-white uppercase tracking-tight">{res.medicineId?.name || 'Unknown'}</h3>
+                                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Medicine</p>
+                                            <h3 className="text-xl font-bold text-white">{res.medicineId?.name || 'Unknown'}</h3>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Status</p>
-                                            <span className={`text-[10px] font-black px-2 py-1 rounded-md border ${res.status === 'Pending' ? 'text-amber-400 border-amber-400/20 bg-amber-400/10' :
+                                            <span className={`text-[10px] font-bold px-2 py-1 rounded-md border ${res.status === 'Pending' ? 'text-amber-400 border-amber-400/20 bg-amber-400/10' :
                                                 res.status === 'Confirmed' ? 'text-teal-400 border-teal-400/20 bg-teal-400/10' : 'text-slate-500 border-slate-700 bg-slate-800/50'
                                                 }`}>
                                                 {res.status.toUpperCase()}
@@ -295,14 +301,14 @@ export const PharmacyOwnerPage: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4 mb-6 p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
-                                        <div>
-                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Customer</p>
-                                            <p className="text-white font-bold text-sm tracking-tight">{res.customerName}</p>
+                                    <div className="space-y-3 mb-8">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-slate-500">Customer</span>
+                                            <span className="text-white font-semibold">{res.customerName}</span>
                                         </div>
-                                        <div>
-                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Phone</p>
-                                            <p className="text-teal-400 font-black text-sm tracking-tighter">{res.customerPhone}</p>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-slate-500">Contact</span>
+                                            <span className="text-teal-400 font-bold">{res.customerPhone}</span>
                                         </div>
                                     </div>
 
@@ -310,24 +316,24 @@ export const PharmacyOwnerPage: React.FC = () => {
                                         {res.status === 'Pending' && (
                                             <button
                                                 onClick={() => handleUpdateStatus(res._id, 'Confirmed')}
-                                                className="flex-1 h-12 bg-teal-500 text-white font-black text-xs tracking-widest rounded-lg"
+                                                className="flex-1 h-12 bg-teal-500 hover:bg-teal-400 text-white font-bold text-sm rounded-xl transition-all"
                                             >
-                                                CONFIRM
+                                                Confirm
                                             </button>
                                         )}
                                         {res.status === 'Confirmed' && (
                                             <button
                                                 onClick={() => handleUpdateStatus(res._id, 'PickedUp')}
-                                                className="flex-1 h-12 bg-emerald-500 text-white font-black text-xs tracking-widest rounded-lg"
+                                                className="flex-1 h-12 bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-sm rounded-xl transition-all"
                                             >
-                                                PICKED UP
+                                                Mark Picked Up
                                             </button>
                                         )}
                                         <button
                                             onClick={() => handleUpdateStatus(res._id, 'Cancelled')}
-                                            className="h-12 px-4 bg-slate-800 text-rose-500/50 hover:text-rose-500 font-black text-xs tracking-widest rounded-lg border border-slate-700 transition-all"
+                                            className="h-12 px-4 bg-white/5 text-slate-500 hover:text-rose-500 rounded-xl transition-all"
                                         >
-                                            X
+                                            Cancel
                                         </button>
                                     </div>
                                 </motion.div>
