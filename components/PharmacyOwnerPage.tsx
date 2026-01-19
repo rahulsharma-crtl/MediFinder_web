@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { authService, reservationService } from '../services/api';
+import { authService, reservationService, medicineService, aiService } from '../services/api';
 import { PharmacyOwnerDashboard } from './PharmacyOwnerDashboard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { reverseGeocode } from '../services/geminiService';
 import { MapPinIcon } from './icons';
+import { StockStatus, InventoryItem } from '../types';
 
 export const PharmacyOwnerPage: React.FC = () => {
     const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
     const [pharmacy, setPharmacy] = useState<any>(null);
     const [reservations, setReservations] = useState<any[]>([]);
+    const [inventory, setInventory] = useState<InventoryItem[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
     // Form fields
@@ -28,14 +30,29 @@ export const PharmacyOwnerPage: React.FC = () => {
     const fetchDashboardData = async () => {
         setIsLoading(true);
         try {
-            const resData = await reservationService.getPharmacyReservations();
-            setReservations(resData.data);
-
             const stored = localStorage.getItem('pharmacy');
-            if (stored) setPharmacy(JSON.parse(stored));
+            const pharmacyData = stored ? JSON.parse(stored) : null;
+            setPharmacy(pharmacyData);
+
+            if (pharmacyData?._id) {
+                const [resData, invData] = await Promise.all([
+                    reservationService.getPharmacyReservations(),
+                    medicineService.getPharmacyInventory(pharmacyData._id)
+                ]);
+                setReservations(resData.data);
+
+                // Map backend Medicine to frontend InventoryItem
+                const mappedInventory = invData.data.map((m: any) => ({
+                    _id: m._id,
+                    medicineName: m.name,
+                    price: m.price,
+                    stock: m.stock as StockStatus
+                }));
+                setInventory(mappedInventory);
+            }
         } catch (error) {
             console.error("Failed to fetch dashboard data", error);
-            handleLogout();
+            // Don't logout immediately on inventory fetch error, might be just a network issue
         } finally {
             setIsLoading(false);
         }
@@ -44,27 +61,18 @@ export const PharmacyOwnerPage: React.FC = () => {
     const handleCheckPhone = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        console.log("Checking phone number:", phone);
         try {
             const response = await authService.loginByPhone(phone);
-            console.log("Phone check success:", response.data);
             const { token, pharmacy: authPharmacy } = response.data;
             localStorage.setItem('token', token);
             localStorage.setItem('pharmacy', JSON.stringify(authPharmacy));
             setToken(token);
             setPharmacy(authPharmacy);
         } catch (error: any) {
-            console.error("Phone check error details:", {
-                status: error.response?.status,
-                data: error.response?.data,
-                message: error.message,
-                config: error.config
-            });
             if (error.response?.status === 404) {
                 setShowRegisterFields(true);
             } else {
-                const errorMsg = error.response?.data?.message || error.message || 'Error checking phone number.';
-                alert(`Error: ${errorMsg}. Check console for details.`);
+                alert(error.response?.data?.message || 'Error checking phone number.');
             }
         } finally {
             setIsLoading(false);
@@ -116,10 +124,7 @@ export const PharmacyOwnerPage: React.FC = () => {
         navigator.geolocation.getCurrentPosition(
             async (position) => {
                 const { latitude, longitude } = position.coords;
-                setLocation({
-                    lat: latitude,
-                    lon: longitude
-                });
+                setLocation({ lat: latitude, lon: longitude });
 
                 try {
                     const fetchedAddress = await reverseGeocode(latitude, longitude);
@@ -130,7 +135,7 @@ export const PharmacyOwnerPage: React.FC = () => {
                     setIsFetchingLocation(false);
                 }
             },
-            (error) => {
+            () => {
                 alert('Could not get your location. Please enable location services.');
                 setIsFetchingLocation(false);
             }
@@ -142,6 +147,8 @@ export const PharmacyOwnerPage: React.FC = () => {
         localStorage.removeItem('pharmacy');
         setToken(null);
         setPharmacy(null);
+        setInventory([]);
+        setReservations([]);
         setShowRegisterFields(false);
         setPhone('');
         setPharmacyName('');
@@ -156,6 +163,56 @@ export const PharmacyOwnerPage: React.FC = () => {
         } catch (error) {
             console.error("Failed to update status", error);
         }
+    };
+
+    // Inventory Handlers
+    const handleItemAdd = async (newItem: InventoryItem) => {
+        try {
+            await medicineService.addMedicine({
+                name: newItem.medicineName,
+                price: newItem.price,
+                stock: newItem.stock,
+                quantity: 100 // Default quantity
+            });
+            fetchDashboardData();
+        } catch (error) {
+            console.error("Failed to add item", error);
+            alert("Failed to add medicine to inventory.");
+        }
+    };
+
+    const handleStockStatusChange = async (medicineName: string, newStatus: StockStatus) => {
+        const item = inventory.find(i => i.medicineName === medicineName);
+        if (!item?._id) return;
+
+        try {
+            await medicineService.updateMedicine(item._id, { stock: newStatus });
+            setInventory(prev => prev.map(i =>
+                i.medicineName === medicineName ? { ...i, stock: newStatus } : i
+            ));
+        } catch (error) {
+            console.error("Failed to update stock status", error);
+        }
+    };
+
+    const handleItemDelete = async (medicineName: string) => {
+        const item = inventory.find(i => i.medicineName === medicineName);
+        if (!item?._id) return;
+
+        if (!window.confirm(`Are you sure you want to remove ${medicineName}?`)) return;
+
+        try {
+            await medicineService.deleteMedicine(item._id);
+            setInventory(prev => prev.filter(i => i.medicineName !== medicineName));
+        } catch (error) {
+            console.error("Failed to delete item", error);
+        }
+    };
+
+    const handleSlipUpload = async (file: File) => {
+        // Mocking slip upload/parsing for now as it's a complex AI task
+        // In a real app, you'd send to aiService.analyzePrescription or similar
+        alert("Slip upload feature coming soon! Please add medicines manually for now.");
     };
 
     if (!token) {
@@ -263,94 +320,94 @@ export const PharmacyOwnerPage: React.FC = () => {
     }
 
     return (
-        <div className="py-12">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
-                <div>
-                    <h1 className="text-4xl font-black text-white tracking-tight">{pharmacy?.name || 'Dashboard'}</h1>
-                    <p className="text-slate-400 text-sm font-bold uppercase tracking-widest">Pharmacy Portal</p>
+        <div className="py-12 space-y-12">
+            <PharmacyOwnerDashboard
+                owner={{
+                    name: pharmacy?.name || 'Dashboard',
+                    address: pharmacy?.address || '',
+                    phone: pharmacy?.contact || ''
+                }}
+                inventory={inventory}
+                onLogout={handleLogout}
+                onSwitchAccount={handleLogout}
+                onItemAdd={handleItemAdd}
+                onSlipUpload={handleSlipUpload}
+                onStockStatusChange={handleStockStatusChange}
+                onItemDelete={handleItemDelete}
+            />
+
+            <section>
+                <div className="flex items-center justify-between mb-8 px-2">
+                    <h2 className="text-3xl font-black text-white">Active Reservations</h2>
+                    <span className="px-5 py-2 bg-accent-teal text-white rounded-xl text-sm font-black shadow-[0_0_20px_rgba(20,184,166,0.3)]">{reservations.length} Pending</span>
                 </div>
-                <button
-                    onClick={handleLogout}
-                    className="h-12 px-6 bg-[#262626] text-white hover:bg-accent-teal font-bold text-sm rounded-xl border-2 border-white/10 transition-all cursor-pointer shadow-lg"
-                >
-                    Logout
-                </button>
-            </div>
 
-            <div className="grid grid-cols-1 gap-12">
-                <section>
-                    <div className="flex items-center justify-between mb-8 px-2">
-                        <h2 className="text-2xl font-black text-white">Active Reservations</h2>
-                        <span className="px-4 py-1.5 bg-accent-teal text-white rounded-lg text-sm font-black shadow-[0_0_15px_rgba(20,184,166,0.3)]">{reservations.length} Pending</span>
+                {reservations.length === 0 ? (
+                    <div className="bg-[#1E1E1E] p-16 text-center rounded-3xl border-2 border-dashed border-white/5">
+                        <p className="text-slate-500 font-bold text-lg">No active reservations yet</p>
                     </div>
-
-                    {reservations.length === 0 ? (
-                        <div className="bg-[#262626] p-20 text-center rounded-3xl border border-dashed border-white/10">
-                            <p className="text-slate-500 font-bold text-lg">No active reservations</p>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {reservations.map((res: any) => (
-                                <motion.div
-                                    key={res._id}
-                                    layout
-                                    className="bg-[#262626] p-7 rounded-3xl border border-white/10 shadow-xl"
-                                >
-                                    <div className="flex justify-between items-start mb-6">
-                                        <div>
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Medicine</p>
-                                            <h3 className="text-xl font-black text-white">{res.medicineId?.name || 'Unknown'}</h3>
-                                        </div>
-                                        <div className="text-right">
-                                            <span className={`text-[10px] font-black px-3 py-1.5 rounded-lg border-2 ${res.status === 'Pending' ? 'text-amber-400 border-amber-400/40 bg-amber-400/10' :
-                                                res.status === 'Confirmed' ? 'text-accent-teal-vibrant border-teal-400/40 bg-teal-400/10' : 'text-slate-400 border-white/10 bg-black/20'
-                                                }`}>
-                                                {res.status.toUpperCase()}
-                                            </span>
-                                        </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {reservations.map((res: any) => (
+                            <motion.div
+                                key={res._id}
+                                layout
+                                className="bg-[#1E1E1E] p-7 rounded-3xl border border-white/10 shadow-xl hover:border-accent-teal/30 transition-all"
+                            >
+                                <div className="flex justify-between items-start mb-6">
+                                    <div>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Medicine</p>
+                                        <h3 className="text-xl font-black text-white">{res.medicineId?.name || 'Unknown'}</h3>
                                     </div>
-
-                                    <div className="space-y-4 mb-8 bg-black/30 p-4 rounded-2xl border border-white/5">
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-slate-400 font-medium">Customer</span>
-                                            <span className="text-white font-black">{res.customerName}</span>
-                                        </div>
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-slate-400 font-medium">Contact</span>
-                                            <span className="text-accent-teal-vibrant font-black">{res.customerPhone}</span>
-                                        </div>
+                                    <div className="text-right">
+                                        <span className={`text-[10px] font-black px-3 py-1.5 rounded-lg border-2 ${res.status === 'Pending' ? 'text-amber-400 border-amber-400/40 bg-amber-400/10' :
+                                            res.status === 'Confirmed' ? 'text-accent-teal-vibrant border-teal-400/40 bg-teal-400/10' : 'text-slate-400 border-white/10 bg-black/20'
+                                            }`}>
+                                            {res.status.toUpperCase()}
+                                        </span>
                                     </div>
+                                </div>
 
-                                    <div className="flex gap-3">
-                                        {res.status === 'Pending' && (
-                                            <button
-                                                onClick={() => handleUpdateStatus(res._id, 'Confirmed')}
-                                                className="flex-1 h-12 bg-accent-teal hover:bg-accent-teal-vibrant text-white font-black text-sm rounded-xl transition-all border-none cursor-pointer shadow-lg"
-                                            >
-                                                Confirm
-                                            </button>
-                                        )}
-                                        {res.status === 'Confirmed' && (
-                                            <button
-                                                onClick={() => handleUpdateStatus(res._id, 'PickedUp')}
-                                                className="flex-1 h-12 bg-emerald-500 hover:bg-emerald-400 text-white font-black text-sm rounded-xl transition-all border-none cursor-pointer shadow-lg"
-                                            >
-                                                Mark Picked Up
-                                            </button>
-                                        )}
+                                <div className="space-y-4 mb-8 bg-black/30 p-4 rounded-2xl border border-white/5">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-slate-400 font-medium">Customer</span>
+                                        <span className="text-white font-black">{res.customerName}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-slate-400 font-medium">Contact</span>
+                                        <span className="text-accent-teal-vibrant font-black">{res.customerPhone}</span>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-3">
+                                    {res.status === 'Pending' && (
                                         <button
-                                            onClick={() => handleUpdateStatus(res._id, 'Cancelled')}
-                                            className="h-12 px-5 bg-white/5 text-slate-500 hover:text-white hover:bg-rose-500/20 rounded-xl transition-all border-none cursor-pointer"
+                                            onClick={() => handleUpdateStatus(res._id, 'Confirmed')}
+                                            className="flex-1 h-12 bg-accent-teal hover:bg-accent-teal-vibrant text-white font-black text-sm rounded-xl transition-all border-none cursor-pointer shadow-lg"
                                         >
-                                            Cancel
+                                            Confirm
                                         </button>
-                                    </div>
-                                </motion.div>
-                            ))}
-                        </div>
-                    )}
-                </section>
-            </div>
+                                    )}
+                                    {res.status === 'Confirmed' && (
+                                        <button
+                                            onClick={() => handleUpdateStatus(res._id, 'PickedUp')}
+                                            className="flex-1 h-12 bg-emerald-500 hover:bg-emerald-400 text-white font-black text-sm rounded-xl transition-all border-none cursor-pointer shadow-lg"
+                                        >
+                                            Mark Picked Up
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => handleUpdateStatus(res._id, 'Cancelled')}
+                                        className="h-12 px-5 bg-white/5 text-slate-500 hover:text-white hover:bg-rose-500/20 rounded-xl transition-all border-none cursor-pointer"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                )}
+            </section>
         </div>
     );
 };

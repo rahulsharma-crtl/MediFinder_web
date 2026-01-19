@@ -24,7 +24,11 @@ api.interceptors.request.use((config) => {
 
 export const medicineService = {
     search: (q: string) => api.get(`/medicines/search?q=${q}`),
-    getDetails: (id: string) => api.get(`/medicines/${id}`)
+    getDetails: (id: string) => api.get(`/medicines/${id}`),
+    getPharmacyInventory: (pharmacyId: string) => api.get(`/medicines/pharmacy/${pharmacyId}`),
+    addMedicine: (data: any) => api.post('/medicines', data),
+    updateMedicine: (id: string, data: any) => api.patch(`/medicines/${id}`, data),
+    deleteMedicine: (id: string) => api.delete(`/medicines/${id}`)
 };
 
 export const reservationService = {

@@ -6,11 +6,31 @@ import { ResultsPage } from './components/ResultsPage';
 import { PharmacyDetailModal } from './components/PharmacyDetailModal';
 import { AccessibilityControls } from './components/AccessibilityControls';
 import { aiService, medicineService } from './services/api';
+import { validateMedicineName, getMedicineRecommendations, getMedicineDescription } from './services/geminiService';
 import { StockStatus } from './types';
 import type { Pharmacy, SortKey, FontSize, SearchConfirmation } from './types';
 import { PharmacyOwnerPage } from './components/PharmacyOwnerPage';
 import { motion, AnimatePresence } from 'framer-motion';
 
+
+const checkMedicineLocally = async (medicine: string) => {
+  const commonMedicines = ['paracetamol', 'dolo 650', 'ibuprofen', 'aspirin'];
+  return commonMedicines.includes(medicine.toLowerCase());
+};
+
+function deg2rad(deg: number) {
+  return deg * (Math.PI / 180);
+}
+
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+  if (!lat1 || !lon1 || !lat2 || !lon2) return Math.random() * 5;
+  const R = 6371;
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
 export default function App() {
   const [page, setPage] = useState<'home' | 'results' | 'pharmacyOwner'>('home');
@@ -60,11 +80,18 @@ export default function App() {
           setMedicineDescription(`${medicine} is commonly used for various health needs. Consult a doctor for professional advice.`);
 
           const availablePharmacies = foundMedicines.map((m: any) => ({
-            ...m.pharmacyId,
+            id: m.pharmacyId?._id || m.pharmacyId,
+            name: m.pharmacyId?.name || 'Unknown Pharmacy',
+            address: m.pharmacyId?.address || 'No address available',
+            phone: m.pharmacyId?.contact || '',
+            lat: m.pharmacyId?.location?.lat || 0,
+            lon: m.pharmacyId?.location?.lon || 0,
             medicine: m.name,
             price: m.price,
-            stock: m.stock,
-            distance: Math.random() * 5 // Mock distance calculation
+            priceUnit: 'per strip', // Default unit
+            stock: m.stock as StockStatus,
+            distance: calculateDistance(latitude, longitude, m.pharmacyId?.location?.lat, m.pharmacyId?.location?.lon),
+            isBestOption: false // Can be determined by logic later
           })).filter((p: any) => p.stock === StockStatus.Available);
 
           setPharmacies(availablePharmacies);
